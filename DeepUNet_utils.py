@@ -11,6 +11,7 @@ class EncoderLayer(nn.Module):
         #TODO check Conv2d output size
         self.encoding = nn.Sequential(
                 nn.Conv2d(input_channel, output_channel, 5, stride=2, padding=2),
+                nn.BatchNorm2d(output_channel),
                 nn.ReLU(inplace=True)
                 )
 
