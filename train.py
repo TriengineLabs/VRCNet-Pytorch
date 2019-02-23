@@ -1,4 +1,5 @@
 import torch
+from icecream import ic
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -10,7 +11,7 @@ from Dataset import WaveDataset
 def train(model,
           dataframe,
           epochs=5,
-          gpu=False,
+          gpu=True,
           optimizer=None,
           criterion=None,
           batch_size=1):
@@ -27,9 +28,12 @@ def train(model,
         epoch_loss = 0
         for lst in dataloader:
             optimizer.zero_grad()
-            mask = model.forward(lst[0].to(device))
-            out = torch.bmm(mask, lst[0])
-            loss = criterion(out, lst[1])
+            mask = model.forward(lst[0].float().to(device))
+            mask = mask.squeeze(0)
+            out = mask * lst[0].float().to(device)
+
+            # TODO better handle unequal sizes for output and target
+            loss = criterion(out, lst[1][:,:,:lst[0].shape[-1]].float().to(device))
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
