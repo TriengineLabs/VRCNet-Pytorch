@@ -1,5 +1,5 @@
-import torch.nn.Functional as F
-from .DeepUNet_utils import *
+import torch.nn.functional as F
+from DeepUNet_utils import *
 
 class DeepUNet(nn.Module):
     def __init__(self, n_channels, n_classes):
