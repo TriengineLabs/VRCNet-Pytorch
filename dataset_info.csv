@@ -1,0 +1,4 @@
+mix_path,source1_path,source2_path
+/Mix/Mix1.wav,/Sources/Guitar1.wav,/Sources/Piano1.wav
+/Mix/Mix2.wav,/Sources/Guitar2.wav,/Sources/Piano2.wav
+/Mix/Mix3.wav,/Sources/Guitar3.wav,/Sources/Piano3.wav
