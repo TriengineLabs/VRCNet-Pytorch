@@ -1,10 +1,13 @@
 from torch.utils.data import Dataset
 from scipy import signal
 from scipy.io import wavfile
+import librosa
+import torch
+import os
 
 
 class WaveDataset(Dataset):
-    def __init__(self, dataframe, data_path='Dataset/', transforms=None):
+    def __init__(self, dataframe, data_path='./Dataset', transforms=None):
         self.data_path = data_path
         self.dataframe = dataframe
         self.transforms = transforms
@@ -13,11 +16,12 @@ class WaveDataset(Dataset):
         return len(self.dataframe)
 
     def __getitem__(self, item):
-        paths = self.dataframe.iloc[1, :].values
+        paths = self.dataframe.iloc[item, :].values
         mel_specs = []
         for i, p in enumerate(paths):
-            sr, y = wavfile.read(self.data_path+p)
-            frequencies, times, mlc = signal.spectrogram(y, sr)
+            inp, sr = librosa.load(self.data_path + p)
+            mlc, phase = librosa.magphase(librosa.stft(inp, n_fft=1024,hop_length=256,window='hann',center='True'))
+
             if i == 0 and self.transforms:
                 mlc_tr = self.transforms(mlc)
                 mel_specs.append(mlc_tr)

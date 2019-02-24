@@ -18,9 +18,10 @@ def normalize(vector):
         normalised = torch.zeros(vector.size())
     return normalised
 
+
 def train(model,
           dataframe,
-          epochs=15,
+          epochs=200,
           gpu=True,
           optimizer=None,
           criterion=None,
@@ -36,15 +37,22 @@ def train(model,
     for e in range(epochs):
         print('Starting Epoch', str(e) + '/' + str(epochs))
         epoch_loss = 0
-        for lst in tqdm(dataloader):
-            optimizer.zero_grad()
-            mask = model.forward(lst[0].float().to(device))
-            mask = mask.squeeze(0)
-            out = mask * lst[0].float().to(device)
+        for n_track, lst in enumerate(tqdm(dataloader)):
+            #TODO change source hardcoding, handle unequal size of mix and source
+            normalized_mix = lst[0].float().to(device)
+            original_mix = lst[1].float().to(device)
+            source1 = lst[2][:,:,:lst[0].shape[-1]].float().to(device)
 
-            # TODO better handle unequal sizes for output and target
-            loss = criterion(out, lst[1][:,:,:lst[0].shape[-1]].float().to(device))
+            optimizer.zero_grad()
+            mask = model.forward(normalized_mix)
+            mask = mask.squeeze(0)
+            out = mask * original_mix[:, :, :-1]
+
+            loss = criterion(out, source1[:, :, :-1])
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
         print('Epoch completed, Loss is: ', epoch_loss/batch_size)
+
+    torch.save(model.state_dict(), 'model_weights.pt')
+

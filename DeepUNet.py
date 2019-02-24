@@ -16,7 +16,7 @@ class DeepUNet(nn.Module):
         self.dec3 = DecoderLayer(256, 64)
         self.dec4 = DecoderLayer(128, 32)
         self.dec5 = DecoderLayer(64, 16)
-        self.dec6 = DecoderLayer(32, n_classes, kernel_size=6)
+        self.dec6 = DecoderLayer(32, n_classes)
 
     def forward(self, x):
         x = x.unsqueeze(0)

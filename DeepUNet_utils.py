@@ -12,7 +12,7 @@ class EncoderLayer(nn.Module):
         self.encoding = nn.Sequential(
                 nn.Conv2d(input_channel, output_channel, 5, stride=2, padding=2),
                 nn.BatchNorm2d(output_channel),
-                nn.ReLU(inplace=True)
+                nn.LeakyReLU(0.02, inplace=True)
                 )
 
     def forward(self, x):
