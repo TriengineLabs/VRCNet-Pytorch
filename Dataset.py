@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
-import librosa
+from scipy import signal
+from scipy.io import wavfile
 
 
 class WaveDataset(Dataset):
@@ -15,8 +16,8 @@ class WaveDataset(Dataset):
         paths = self.dataframe.iloc[1, :].values
         mel_specs = []
         for i, p in enumerate(paths):
-            y, sr = librosa.load(self.data_path+p)
-            mlc = librosa.feature.melspectrogram(y=y, sr=sr)
+            sr, y = wavfile.read(self.data_path+p)
+            frequencies, times, mlc = signal.spectrogram(y, sr)
             if i == 0 and self.transforms:
                 mlc_tr = self.transforms(mlc)
                 mel_specs.append(mlc_tr)
