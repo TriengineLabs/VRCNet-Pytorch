@@ -14,11 +14,12 @@ class WaveDataset(Dataset):
     def __getitem__(self, item):
         paths = self.dataframe.iloc[1, :].values
         mel_specs = []
-        for p in paths:
+        for i, p in enumerate(paths):
             y, sr = librosa.load(self.data_path+p)
             mlc = librosa.feature.melspectrogram(y=y, sr=sr)
-            if self.transforms:
-                mlc = self.transforms(mlc)
+            if i == 0 and self.transforms:
+                mlc_tr = self.transforms(mlc)
+                mel_specs.append(mlc_tr)
             mel_specs.append(mlc)
 
         return mel_specs
