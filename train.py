@@ -4,23 +4,9 @@ from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from torchvision import transforms
 
 from Dataset import WaveDataset
-
-
-
-
-
-def normalize(vector):
-    vector = torch.Tensor(vector)
-    min_v = torch.min(vector)
-    range_v = torch.max(vector) - min_v
-    if range_v > 0:
-        normalised = (vector - min_v) / range_v
-    else:
-        normalised = torch.zeros(vector.size())
-    return normalised
+import transforms
 
 
 def train(model,
@@ -35,7 +21,8 @@ def train(model,
     model.to(device)
     optimizer = optimizer if optimizer else optim.Adam(model.parameters())
     criterion = criterion if criterion else nn.L1Loss()
-    dataset = WaveDataset(dataframe, transforms=normalize)
+    dataset = WaveDataset(dataframe, transforms=[transforms.HorizontalCrop(1024),
+                                                 transforms.Normalize()])
     dataloader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=False, num_workers=1)
     for e in range(epochs):
