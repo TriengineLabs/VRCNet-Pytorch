@@ -8,6 +8,10 @@ from torchvision import transforms
 
 from Dataset import WaveDataset
 
+
+
+
+
 def normalize(vector):
     vector = torch.Tensor(vector)
     min_v = torch.min(vector)
@@ -21,7 +25,7 @@ def normalize(vector):
 
 def train(model,
           dataframe,
-          epochs=200,
+          epochs=15,
           gpu=True,
           optimizer=None,
           criterion=None,

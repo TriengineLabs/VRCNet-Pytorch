@@ -19,6 +19,7 @@ class WaveDataset(Dataset):
             mlc, phase = librosa.magphase(librosa.stft(inp, n_fft=1024, hop_length=256, window='hann', center=True))
             mel_specs.append(mlc)
 
+        # TODO add pipeline
         if self.transforms:
             for tr in self.transforms:
                 mel_specs = tr(mel_specs)
