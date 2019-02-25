@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 class Normalize(nn.Module):
@@ -20,7 +21,7 @@ class Normalize(nn.Module):
 
 class HorizontalCrop(nn.Module):
     def __init__(self, crop_size):
-        super(HorizontalCrop, self)
+        super(HorizontalCrop, self).__init__()
         self.crop_size = crop_size
 
     def forward(self, vector):
