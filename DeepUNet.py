@@ -1,10 +1,11 @@
 import torch.nn.functional as F
 from DeepUNet_utils import *
+from icecream import ic
+
 
 class DeepUNet(nn.Module):
     def __init__(self, n_channels, n_classes):
         super(DeepUNet, self).__init__()
-
         self.enc1 = EncoderLayer(n_channels, 16)
         self.enc2 = EncoderLayer(16, 32)
         self.enc3 = EncoderLayer(32, 64)
@@ -19,7 +20,8 @@ class DeepUNet(nn.Module):
         self.dec6 = DecoderLayer(32, n_classes)
 
     def forward(self, x):
-        x = x.unsqueeze(0)
+        # Extending one dimension that corresponds to 1 channel of the input
+        x = x.unsqueeze(1)
 
         x1 = self.enc1(x)
         x2 = self.enc2(x1)
