@@ -16,7 +16,11 @@ class WaveDataset(Dataset):
         mel_specs = []
         for i, p in enumerate(paths):
             inp, sr = librosa.load(self.data_path + p)
-            mlc, phase = librosa.magphase(librosa.stft(inp, n_fft=1024, hop_length=256, window='hann', center=True))
+            inp = librosa.resample(inp, sr, 8192)
+            mlc, phase = librosa.magphase(librosa.stft(inp, n_fft=1024, hop_length=768, window='hann', center=True))
+            #TODO find better way to handle even shape
+            if mlc.shape[1]%2 == 0:
+                mlc = mlc[:, :-1]
             mel_specs.append(mlc)
 
         # TODO add pipeline
