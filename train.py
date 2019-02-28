@@ -6,23 +6,26 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from Dataset import WaveDataset
 import transforms
+import pandas as pd
 
 EARLY_STOPPING_EPOCHS = 20
 
 
 def train(model,
-          dataframe,
+          csv_path,
           epochs=15,
           gpu=True,
           optimizer=None,
           criterion=None,
-          batch_size=3,
-          model_weight_name='model_weights.pk'):
+          batch_size=1,
+          model_weight_name='model_weights.pt'):
     device = 'cuda' if gpu else 'cpu'
     model.to(device)
     optimizer = optimizer if optimizer else optim.Adam(model.parameters())
     criterion = criterion if criterion else nn.L1Loss()
-    dataset = WaveDataset(dataframe, transforms=[transforms.HorizontalCrop(449),
+
+    procesed_data = pd.read_csv(csv_path)
+    dataset = WaveDataset(procesed_data, transforms=[transforms.HorizontalCrop(449),
                                                  transforms.Normalize()])
     dataloader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=False, num_workers=3)
@@ -40,8 +43,6 @@ def train(model,
                 normalized_mix = lst[0].float().to(device)
                 original_mix = lst[1].float().to(device)
                 source1 = lst[2].float().to(device)
-
-                # ic(normalized_mix.shape, original_mix.shape, source1.shape)
 
                 optimizer.zero_grad()
                 mask = model.forward(normalized_mix)

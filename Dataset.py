@@ -1,10 +1,10 @@
 from torch.utils.data import Dataset
 import librosa
+import h5py
 
 
 class WaveDataset(Dataset):
-    def __init__(self, dataframe, data_path='./Dataset', transforms=None):
-        self.data_path = data_path
+    def __init__(self, dataframe, transforms=None):
         self.dataframe = dataframe
         self.transforms = transforms
 
@@ -15,9 +15,10 @@ class WaveDataset(Dataset):
         paths = self.dataframe.iloc[item, :].values
         mel_specs = []
         for i, p in enumerate(paths):
-            inp, sr = librosa.load(self.data_path + p)
-            inp = librosa.resample(inp, sr, 8192)
-            mlc, phase = librosa.magphase(librosa.stft(inp, n_fft=1024, hop_length=768, window='hann', center=True))
+            # Read saved numpy arrays that correspond to the initial music
+            with h5py.File(p, 'r') as hf:
+                data = hf['dataset'][:]
+            mlc, phase = librosa.magphase(data)
             #TODO find better way to handle even shape
             if mlc.shape[1]%2 == 0:
                 mlc = mlc[:, :-1]
