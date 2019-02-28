@@ -19,7 +19,7 @@ subparsers = parser.add_subparsers(dest='mode')
 train_p = subparsers.add_parser('train')
 train_p.add_argument('-d', '--data_path', required=True,
                      help='path to your preprocessed CSV data file')
-train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to train')
+train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to train', type=int)
 gpu_group = train_p.add_mutually_exclusive_group()
 gpu_group.add_argument('--cpu', action='store_true', help='train on CPU')
 gpu_group.add_argument('--gpu', action='store_false', help='train on GPU')
