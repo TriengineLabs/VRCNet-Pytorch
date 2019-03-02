@@ -70,6 +70,7 @@ def train(model,
                     break
             else:
                 best_model_dict = model.state_dict()
+                best_loss = epoch_mean_loss
                 unimproved_epochs = 0
     except KeyboardInterrupt:
         if best_model_dict:

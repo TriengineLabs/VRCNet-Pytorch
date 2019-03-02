@@ -1,7 +1,6 @@
-import torch.nn.functional as F
 from DeepUNet_utils import *
-from icecream import ic
-
+import torch
+from activation_functions import LeakyRELU
 
 class DeepUNet(nn.Module):
     def __init__(self, n_channels, n_classes):
@@ -18,6 +17,8 @@ class DeepUNet(nn.Module):
         self.dec4 = DecoderLayer(128, 32)
         self.dec5 = DecoderLayer(64, 16)
         self.dec6 = DecoderLayer(32, n_classes)
+
+        self.lrelu = LeakyRELU(y_deviation=0.5, negative_slope=0.1) 
 
     def forward(self, x):
         # Extending one dimension that corresponds to 1 channel of the input
@@ -37,4 +38,4 @@ class DeepUNet(nn.Module):
         x = self.dec5(x, x1)
         x = self.dec6(x, concat=False)
 
-        return F.sigmoid(x)
+        return self.lrelu(x)
