@@ -18,10 +18,15 @@ def train(model,
           optimizer=None,
           criterion=None,
           batch_size=1,
-          model_weight_name='model_weights.pt'):
+          model_weight_name='model_weights.pt',
+          lr=None):
     device = 'cuda' if gpu else 'cpu'
     model.to(device)
     optimizer = optimizer if optimizer else optim.Adam(model.parameters())
+    if lr:
+        for g in optimizer.param_groups:
+            g['lr'] = lr
+
     criterion = criterion if criterion else nn.L1Loss()
 
     procesed_data = pd.read_csv(csv_path)
