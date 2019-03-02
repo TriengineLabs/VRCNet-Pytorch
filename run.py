@@ -21,7 +21,7 @@ train_p.add_argument('-d', '--data_path', required=True,
                      help='path to your preprocessed CSV data file')
 train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to train', type=int)
 train_p.add_argument('--lr', default=None, help='Learning Rate', type=float)
-train_p.add_argument('--batch_size', default=None, help='Batch Size', type=float)
+train_p.add_argument('--batch_size', default=3, help='Batch Size', type=int)
 train_p.add_argument('--model_weight_name', default='model_weights.pt', help='file name of Model Weights', type=str)
 
 gpu_group = train_p.add_mutually_exclusive_group()
