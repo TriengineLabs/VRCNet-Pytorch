@@ -29,9 +29,9 @@ def train(model,
     device = 'cuda' if gpu else 'cpu'
     model.to(device)
 
-    if log_dir and log_value:
-        configure(log_dir + '/' + log_value)
-    else:
+    if log_dir and log_name:
+        configure(log_dir + '/' + log_name)
+    elif (not log_dir and log_name) or (log_dir and not log_name):
         raise ValueError('Either both log_value and log_name or none of them shall be provided')
 
     optimizer = optimizer if optimizer else optim.Adam(model.parameters())
