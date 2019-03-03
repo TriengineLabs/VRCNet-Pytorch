@@ -62,8 +62,8 @@ def train(model,
     details = {'CSV_path': csv_path,
                'epochs': epochs,
                'gpu': gpu,
-               'optimizer': optimizer,
-               'criterion': criterion,
+               'optimizer': str(optimizer),
+               'criterion': str(criterion),
                'lr': lr,
                'batch_size': batch_size,
                'model_weight_name': model_weight_name,
@@ -72,6 +72,7 @@ def train(model,
 
     criterion = criterion if criterion else nn.L1Loss()
     scheduler = scheduler(optimizer, step_size=50, gamma=0.97) if scheduler else None
+
     procesed_data = pd.read_csv(csv_path)
     dataset = WaveDataset(procesed_data, transforms=[transforms.HorizontalCrop(449),
                                                  transforms.Normalize()])
@@ -106,7 +107,8 @@ def train(model,
                     scheduler.step()
 
             epoch_mean_loss = epoch_full_loss / len(dataloader)
-            log_value('Training Epoch Loss', epoch_mean_loss)
+            if log_dir and log_name:
+                log_value('Training Epoch Loss', epoch_mean_loss)
             print('Epoch completed, Loss is: ', epoch_mean_loss)
 
             # Early Stopping
