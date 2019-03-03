@@ -9,9 +9,10 @@ import h5py
 import torch
 import argparse
 from tqdm import tqdm
-
+from torch.optim.lr_scheduler import StepLR
 from DeepUNet import DeepUNet
 import train
+from pickle import UnpicklingError
 
 parser = argparse.ArgumentParser(description='U-Net model for music source separation')
 subparsers = parser.add_subparsers(dest='mode')
@@ -25,6 +26,7 @@ train_p.add_argument('--batch_size', default=3, help='Batch Size', type=int)
 train_p.add_argument('--model_weight_name', default='model_weights.pt', help='file name of Model Weights', type=str)
 train_p.add_argument('--log_dir', default=None, help='Dir for logs', type=str)
 train_p.add_argument('--log_name', default=None, help='Name for this experiment\'s log', type=str)
+train_p.add_argument('--pretrained_model', default='', help='file name of PreTrained Weights to be loaded', type=str)
 
 gpu_group = train_p.add_mutually_exclusive_group()
 gpu_group.add_argument('--cpu', action='store_true', help='train on CPU')
@@ -39,6 +41,43 @@ preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_data
                           help='Path to save processed CSV')
 
 args = vars(parser.parse_args())
+
+
+def main():
+    args = vars(parser.parse_args())
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+    if args['mode'] == 'preprocess':
+        # Read audio files once and store them with numpy extension for quicker processing during training
+        # Make PREPARATION_NEEDED=True if dataset is new/changed, else set it False
+        initial_data = pd.read_csv(args['data_csv'])
+        prepare_dataset(args['data_path'], initial_data, args['out_dir'], args['processed_csv_dir'])
+    elif args['mode'] == 'train':
+        # Defining model
+        model = DeepUNet(1, 1)
+
+        # If pre-trained weights are specified, load them:
+        if args['pretrained_model']:
+            try:
+                model.load_state_dict(torch.load(args['pretrained_model']))
+            except (UnpicklingError, FileNotFoundError) as e:
+                print(e)
+                print('The pretrained model path is not correct!')
+                return
+        # Start training
+        train.train(model,
+                    args['data_path'],
+                    criterion=torch.nn.MSELoss(),
+                    scheduler=StepLR,
+                    gpu=args['gpu'],
+                    epochs=args['epochs'],
+                    lr=args['lr'],
+                    batch_size=args['batch_size'],
+                    model_weight_name=args['model_weight_name'],
+                    log_dir=args['log_dir'],
+                    log_name=args['log_name'])
+
 
 def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', processed_csv_path='./processed_dataset.csv'):
     print('Starting preparing dataset...')
@@ -66,26 +105,4 @@ def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', process
     processed_csv.to_csv(processed_csv_path, index=False)
 
 if __name__ == "__main__":
-    args = vars(parser.parse_args())
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stderr)
-        sys.exit(1)
-    if args['mode'] == 'preprocess':
-        # Read audio files once and store them with numpy extension for quicker processing during training
-        # Make PREPARATION_NEEDED=True if dataset is new/changed, else set it False
-        initial_data = pd.read_csv(args['data_csv'])
-        prepare_dataset(args['data_path'], initial_data, args['out_dir'], args['processed_csv_dir'])
-    elif args['mode'] == 'train':
-        # Defining model
-        model = DeepUNet(1, 1)
-        # Start training
-        train.train(model,
-                    args['data_path'],
-                    criterion=torch.nn.MSELoss(),
-                    gpu=args['gpu'],
-                    epochs=args['epochs'],
-                    lr=args['lr'],
-                    batch_size=args['batch_size'],
-                    model_weight_name=args['model_weight_name'],
-                    log_dir=args['log_dir'],
-                    log_name=args['log_name'])
+    main()
