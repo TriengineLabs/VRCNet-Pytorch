@@ -8,6 +8,7 @@ from Dataset import WaveDataset
 import transforms
 import pandas as pd
 from copy import deepcopy
+from tensorboard_logger import configure, log_value
 
 EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
@@ -22,9 +23,17 @@ def train(model,
           scheduler=None,
           batch_size=1,
           model_weight_name='model_weights.pt',
-          lr=None):
+          lr=None,
+          log_dir=None,
+          log_name=None):
     device = 'cuda' if gpu else 'cpu'
     model.to(device)
+
+    if log_dir and log_value:
+        configure(log_dir + '/' + log_value)
+    else:
+        raise ValueError('Either both log_value and log_name or none of them shall be provided')
+
     optimizer = optimizer if optimizer else optim.Adam(model.parameters())
     if lr:
         for g in optimizer.param_groups:
@@ -67,6 +76,7 @@ def train(model,
                     scheduler.step()
 
             epoch_mean_loss = epoch_full_loss / len(dataloader)
+            log_value('Training Epoch Loss', epoch_mean_loss)
             print('Epoch completed, Loss is: ', epoch_mean_loss)
 
             # Early Stopping

@@ -23,6 +23,8 @@ train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to tr
 train_p.add_argument('--lr', default=None, help='Learning Rate', type=float)
 train_p.add_argument('--batch_size', default=3, help='Batch Size', type=int)
 train_p.add_argument('--model_weight_name', default='model_weights.pt', help='file name of Model Weights', type=str)
+train_p.add_argument('--log_dir', default=None, help='Dir for logs', type=str)
+train_p.add_argument('--log_name', default=None, help='Name for this experiment\'s log', type=str)
 
 gpu_group = train_p.add_mutually_exclusive_group()
 gpu_group.add_argument('--cpu', action='store_true', help='train on CPU')
@@ -37,7 +39,6 @@ preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_data
                           help='Path to save processed CSV')
 
 args = vars(parser.parse_args())
-
 
 def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', processed_csv_path='./processed_dataset.csv'):
     print('Starting preparing dataset...')
@@ -64,7 +65,6 @@ def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', process
         processed_csv.loc[len(processed_csv)] = row_to_insert
     processed_csv.to_csv(processed_csv_path, index=False)
 
-
 if __name__ == "__main__":
     args = vars(parser.parse_args())
     if len(sys.argv) == 1:
@@ -86,4 +86,6 @@ if __name__ == "__main__":
                     epochs=args['epochs'],
                     lr=args['lr'],
                     batch_size=args['batch_size'],
-                    model_weight_name=args['model_weight_name'])
+                    model_weight_name=args['model_weight_name'],
+                    log_dir=args['log_dir'],
+                    log_name=args['log_name'])
