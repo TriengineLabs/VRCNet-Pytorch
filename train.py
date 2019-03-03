@@ -1,3 +1,6 @@
+import json
+import os
+
 import torch
 from icecream import ic
 from torch import nn
@@ -14,6 +17,22 @@ EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
 torch.cuda.manual_seed(42)
 
+
+def saveInfoFile(train_info_file, details):
+    a = []
+    if not os.path.isfile(train_info_file):
+        a.append(details)
+        with open(train_info_file, mode='w') as f:
+            f.write(json.dumps(a, indent=2))
+    else:
+        with open(train_info_file) as feedsjson:
+            feeds = json.load(feedsjson)
+
+        feeds.append(details)
+        with open(train_info_file, mode='w') as f:
+            f.write(json.dumps(feeds, indent=2))
+
+
 def train(model,
           csv_path,
           epochs=15,
@@ -25,7 +44,8 @@ def train(model,
           model_weight_name='model_weights.pt',
           lr=None,
           log_dir=None,
-          log_name=None):
+          log_name=None,
+          train_info_file=None):
     device = 'cuda' if gpu else 'cpu'
     model.to(device)
 
@@ -39,9 +59,19 @@ def train(model,
         for g in optimizer.param_groups:
             g['lr'] = lr
 
+    details = {'CSV_path': csv_path,
+               'epochs': epochs,
+               'gpu': gpu,
+               'optimizer': optimizer,
+               'criterion': criterion,
+               'lr': lr,
+               'batch_size': batch_size,
+               'model_weight_name': model_weight_name,
+               'log_dir': log_dir,
+               'log_name': log_name}
+
     criterion = criterion if criterion else nn.L1Loss()
     scheduler = scheduler(optimizer, step_size=50, gamma=0.97) if scheduler else None
-
     procesed_data = pd.read_csv(csv_path)
     dataset = WaveDataset(procesed_data, transforms=[transforms.HorizontalCrop(449),
                                                  transforms.Normalize()])
@@ -52,8 +82,8 @@ def train(model,
     best_loss = 1000
     best_model_dict = None
 
-    try:
-        for e in range(epochs):
+    for e in range(epochs):
+        try:
             print('Starting Epoch', str(e) + '/' + str(epochs))
             epoch_full_loss = 0
             for n_track, lst in enumerate(tqdm(dataloader)):
@@ -89,9 +119,16 @@ def train(model,
                 best_model_dict = deepcopy(model.state_dict())
                 best_loss = epoch_mean_loss
                 unimproved_epochs = 0
-    except KeyboardInterrupt:
-        if best_model_dict:
-            print('Saving the model!!')
-            torch.save(best_model_dict, ('interrupted_' + model_weight_name))
-        raise (KeyboardInterrupt)
+        except KeyboardInterrupt:
+            if best_model_dict:
+                print('Saving the model!!')
+                torch.save(best_model_dict, ('interrupted_' + model_weight_name))
+                details['min_loss'] = best_loss
+                details['stopped_on'] = e
+                saveInfoFile(train_info_file, details)
+            raise KeyboardInterrupt
+
+    details['min_loss'] = best_loss
+    saveInfoFile(train_info_file, details)
+
     torch.save(best_model_dict, model_weight_name)

@@ -27,6 +27,7 @@ train_p.add_argument('--model_weight_name', default='model_weights.pt', help='fi
 train_p.add_argument('--log_dir', default=None, help='Dir for logs', type=str)
 train_p.add_argument('--log_name', default=None, help='Name for this experiment\'s log', type=str)
 train_p.add_argument('--pretrained_model', default='', help='file name of PreTrained Weights to be loaded', type=str)
+train_p.add_argument('--train_info_file', default=None, help='File to store training info', type=str)
 
 gpu_group = train_p.add_mutually_exclusive_group()
 gpu_group.add_argument('--cpu', action='store_true', help='train on CPU')
@@ -76,7 +77,8 @@ def main():
                     batch_size=args['batch_size'],
                     model_weight_name=args['model_weight_name'],
                     log_dir=args['log_dir'],
-                    log_name=args['log_name'])
+                    log_name=args['log_name'],
+                    train_info_file=args['train_info_file'])
 
 
 def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', processed_csv_path='./processed_dataset.csv'):
@@ -103,6 +105,7 @@ def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', process
 
         processed_csv.loc[len(processed_csv)] = row_to_insert
     processed_csv.to_csv(processed_csv_path, index=False)
+
 
 if __name__ == "__main__":
     main()
