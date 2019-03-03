@@ -7,9 +7,11 @@ from tqdm import tqdm
 from Dataset import WaveDataset
 import transforms
 import pandas as pd
+from copy import deepcopy
 
-EARLY_STOPPING_EPOCHS = 20
-
+EARLY_STOPPING_EPOCHS = 100
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
 
 def train(model,
           csv_path,
@@ -17,6 +19,7 @@ def train(model,
           gpu=True,
           optimizer=None,
           criterion=None,
+          scheduler=None,
           batch_size=1,
           model_weight_name='model_weights.pt',
           lr=None):
@@ -28,6 +31,7 @@ def train(model,
             g['lr'] = lr
 
     criterion = criterion if criterion else nn.L1Loss()
+    scheduler = scheduler(optimizer, step_size=50, gamma=0.97) if scheduler else None
 
     procesed_data = pd.read_csv(csv_path)
     dataset = WaveDataset(procesed_data, transforms=[transforms.HorizontalCrop(449),
@@ -59,6 +63,9 @@ def train(model,
                 optimizer.step()
                 epoch_full_loss += loss.item()
 
+                if scheduler:
+                    scheduler.step()
+
             epoch_mean_loss = epoch_full_loss / len(dataloader)
             print('Epoch completed, Loss is: ', epoch_mean_loss)
 
@@ -69,11 +76,12 @@ def train(model,
                     print('Early stopping happened')
                     break
             else:
-                best_model_dict = model.state_dict()
+                best_model_dict = deepcopy(model.state_dict())
                 best_loss = epoch_mean_loss
                 unimproved_epochs = 0
     except KeyboardInterrupt:
         if best_model_dict:
+            print('Saving the model!!')
             torch.save(best_model_dict, ('interrupted_' + model_weight_name))
         raise (KeyboardInterrupt)
     torch.save(best_model_dict, model_weight_name)

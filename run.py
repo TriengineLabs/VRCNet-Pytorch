@@ -85,4 +85,5 @@ if __name__ == "__main__":
                     gpu=args['gpu'],
                     epochs=args['epochs'],
                     lr=args['lr'],
-                    batch_size=args['batch_size'])
+                    batch_size=args['batch_size'],
+                    model_weight_name=args['model_weight_name'])
