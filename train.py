@@ -8,10 +8,11 @@ from torch import optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from Dataset import WaveDataset
+from exceptions import StopTrainingException
 import transforms
 import pandas as pd
 from copy import deepcopy
-from tensorboard_logger import configure, log_value
+# from tensorboard_logger import configure, log_value
 
 EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
@@ -128,7 +129,7 @@ def train(model,
                 details['min_loss'] = best_loss
                 details['stopped_on'] = e
                 saveInfoFile(train_info_file, details)
-            raise KeyboardInterrupt
+            raise StopTrainingException(e)
 
     details['min_loss'] = best_loss
     saveInfoFile(train_info_file, details)
