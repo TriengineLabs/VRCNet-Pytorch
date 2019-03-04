@@ -8,11 +8,12 @@ import ntpath
 import h5py
 import torch
 import argparse
-from tqdm import tqdm
-from torch.optim.lr_scheduler import StepLR
-from DeepUNet import DeepUNet
 import train
+from tqdm import tqdm
+from DeepUNet import DeepUNet
+from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
+from exceptions import StopTrainingException
 
 parser = argparse.ArgumentParser(description='U-Net model for music source separation')
 subparsers = parser.add_subparsers(dest='mode')
@@ -108,4 +109,7 @@ def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', process
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except StopTrainingException as e:
+        print (e)
