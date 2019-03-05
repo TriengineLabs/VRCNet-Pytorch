@@ -10,6 +10,8 @@ import torch
 import argparse
 import train
 from tqdm import tqdm
+from torch.optim.lr_scheduler import StepLR
+
 from DeepUNet import DeepUNet
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
@@ -43,7 +45,6 @@ preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_data
                           help='Path to save processed CSV')
 
 args = vars(parser.parse_args())
-
 
 def main():
     args = vars(parser.parse_args())
@@ -81,7 +82,6 @@ def main():
                     log_name=args['log_name'],
                     train_info_file=args['train_info_file'])
 
-
 def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', processed_csv_path='./processed_dataset.csv'):
     print('Starting preparing dataset...')
     if not os.path.exists(path_to_save):
@@ -106,7 +106,6 @@ def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', process
 
         processed_csv.loc[len(processed_csv)] = row_to_insert
     processed_csv.to_csv(processed_csv_path, index=False)
-
 
 if __name__ == "__main__":
     try:

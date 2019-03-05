@@ -12,12 +12,11 @@ from exceptions import StopTrainingException
 import transforms
 import pandas as pd
 from copy import deepcopy
-# from tensorboard_logger import configure, log_value
+from tensorboard_logger import configure, log_value
 
 EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
 torch.cuda.manual_seed(42)
-
 
 def saveInfoFile(train_info_file, details):
     a = []
@@ -32,7 +31,6 @@ def saveInfoFile(train_info_file, details):
         feeds.append(details)
         with open(train_info_file, mode='w') as f:
             f.write(json.dumps(feeds, indent=2))
-
 
 def train(model,
           csv_path,
@@ -72,7 +70,7 @@ def train(model,
                'log_name': log_name}
 
     criterion = criterion if criterion else nn.L1Loss()
-    scheduler = scheduler(optimizer, step_size=50, gamma=0.97) if scheduler else None
+    scheduler = scheduler(optimizer, step_size=100, gamma=0.999) if scheduler else None
 
     procesed_data = pd.read_csv(csv_path)
     dataset = WaveDataset(procesed_data, transforms=[transforms.HorizontalCrop(449),
@@ -96,7 +94,9 @@ def train(model,
 
                 optimizer.zero_grad()
                 mask = model.forward(normalized_mix)
-                mask = mask.squeeze(0)
+                mask = mask.squeeze(0).squeeze(1)
+                ic(mask.shape)
+                ic(mask.squeeze(1).shape)
                 out = mask * original_mix
 
                 loss = criterion(out, source1)

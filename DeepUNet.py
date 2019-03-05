@@ -3,28 +3,40 @@ import torch
 from activation_functions import LeakyRELU
 
 class DeepUNet(nn.Module):
-    def __init__(self, n_channels, n_classes):
+    def __init__(self, n_channels, n_classes, filters=32):
         super(DeepUNet, self).__init__()
-        self.enc1 = EncoderLayer(n_channels, 16)
-        self.enc2 = EncoderLayer(16, 32)
-        self.enc3 = EncoderLayer(32, 64)
-        self.enc4 = EncoderLayer(64, 128)
-        self.enc5 = EncoderLayer(128, 256)
-        self.enc6 = EncoderLayer(256, 512)
-        self.dec1 = DecoderLayer(512, 256)
-        self.dec2 = DecoderLayer(512, 128)
-        self.dec3 = DecoderLayer(256, 64)
-        self.dec4 = DecoderLayer(128, 32)
-        self.dec5 = DecoderLayer(64, 16)
-        self.dec6 = DecoderLayer(32, n_classes)
 
-        self.lrelu = LeakyRELU(y_deviation=0.5, negative_slope=0.1) 
+        self.first_conv = nn.Sequential(
+            nn.Conv2d(n_channels, filters, 5, 1, 2, bias=False),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.02)
+        )
+
+        # self.enc1 = EncoderLayer(n_channels, filters)
+        self.enc1 = EncoderLayer(filters, filters*2)
+        self.enc2 = EncoderLayer(filters*2, filters*4)
+        self.enc3 = EncoderLayer(filters*4, filters*8)
+        self.enc4 = EncoderLayer(filters*8, filters*16)
+        self.enc5 = EncoderLayer(filters*16, filters*32)
+        self.enc6 = EncoderLayer(filters*32, filters*64)
+        self.dec1 = DecoderLayer(filters*64, filters*32)
+        self.dec2 = DecoderLayer(filters*64, filters*16)
+        self.dec3 = DecoderLayer(filters*32, filters*8)
+        self.dec4 = DecoderLayer(filters*16, filters*4)
+        self.dec5 = DecoderLayer(filters*8, filters*2)
+        self.dec6 = DecoderLayer(filters*4, filters)
+
+        self.last_conv = nn.Sequential(
+            nn.Conv2d(filters*2, n_classes, 5, 1, 2),
+            nn.Sigmoid()
+        )
 
     def forward(self, x):
         # Extending one dimension that corresponds to 1 channel of the input
         x = x.unsqueeze(1)
 
-        x1 = self.enc1(x)
+        x0 = self.first_conv(x)
+        x1 = self.enc1(x0)
         x2 = self.enc2(x1)
         x3 = self.enc3(x2)
         x4 = self.enc4(x3)
@@ -36,6 +48,7 @@ class DeepUNet(nn.Module):
         x = self.dec3(x, x3)
         x = self.dec4(x, x2)
         x = self.dec5(x, x1)
-        x = self.dec6(x, concat=False)
+        x = self.dec6(x, x0)
+        x = self.last_conv(x)
 
-        return self.lrelu(x)
+        return x
