@@ -12,7 +12,7 @@ import train
 from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 
-from DeepUNet import DeepUNet
+from model.SCUNet import Generator
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
 from exceptions import StopTrainingException
@@ -58,7 +58,7 @@ def main():
         prepare_dataset(args['data_path'], initial_data, args['out_dir'], args['processed_csv_dir'])
     elif args['mode'] == 'train':
         # Defining model
-        model = DeepUNet(1, 1)
+        model = Generator(1)
 
         # If pre-trained weights are specified, load them:
         if args['pretrained_model']:
@@ -71,7 +71,6 @@ def main():
         # Start training
         train.train(model,
                     args['data_path'],
-                    criterion=torch.nn.MSELoss(),
                     scheduler=StepLR,
                     gpu=args['gpu'],
                     epochs=args['epochs'],

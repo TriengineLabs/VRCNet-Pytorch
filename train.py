@@ -95,8 +95,6 @@ def train(model,
                 optimizer.zero_grad()
                 mask = model.forward(normalized_mix)
                 mask = mask.squeeze(0).squeeze(1)
-                ic(mask.shape)
-                ic(mask.squeeze(1).shape)
                 out = mask * original_mix
 
                 loss = criterion(out, source1)
