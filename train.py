@@ -73,7 +73,8 @@ def train(model,
     scheduler = scheduler(optimizer, step_size=100, gamma=0.999) if scheduler else None
 
     procesed_data = pd.read_csv(csv_path)
-    dataset = WaveDataset(procesed_data, transforms=[transforms.HorizontalCrop(449),
+    dataset = WaveDataset(procesed_data,
+                          transforms=[transforms.HorizontalCrop(128),
                                                  transforms.Normalize()])
     dataloader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=False, num_workers=3)
