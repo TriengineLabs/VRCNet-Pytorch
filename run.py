@@ -2,20 +2,17 @@
 
 import sys
 import pandas as pd
-import librosa
-import os
 import ntpath
-import h5py
 import torch
 import argparse
 import train
-from tqdm import tqdm
 from torch.optim.lr_scheduler import StepLR
 
 from model.SCUNet import Generator
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
 from exceptions import StopTrainingException
+from preprocess import prepare_dataset
 
 parser = argparse.ArgumentParser(description='U-Net model for music source separation')
 subparsers = parser.add_subparsers(dest='mode')
@@ -38,7 +35,7 @@ gpu_group.add_argument('--gpu', action='store_false', help='train on GPU')
 
 preprocess_p = subparsers.add_parser('preprocess')
 preprocess_p.add_argument('-d', '--data_path', required=True, help='path to your data directory')
-preprocess_p.add_argument('-c', '--data_csv', required=True,
+preprocess_p.add_argument('-s', '--data_subset', required=True,
                           help='path to your CSV file linking paths of mixes and sources')
 preprocess_p.add_argument('-o', '--out_dir', default='./numpy_data', help='Directory to save processed data')
 preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_dataset.csv',
@@ -54,8 +51,7 @@ def main():
     if args['mode'] == 'preprocess':
         # Read audio files once and store them with numpy extension for quicker processing during training
         # Make PREPARATION_NEEDED=True if dataset is new/changed, else set it False
-        initial_data = pd.read_csv(args['data_csv'])
-        prepare_dataset(args['data_path'], initial_data, args['out_dir'], args['processed_csv_dir'])
+        prepare_dataset(args['data_path'], args['data_subset'], args['out_dir'], args['processed_csv_dir'])
     elif args['mode'] == 'train':
         # Defining model
         model = Generator(1)
@@ -80,31 +76,6 @@ def main():
                     log_dir=args['log_dir'],
                     log_name=args['log_name'],
                     train_info_file=args['train_info_file'])
-
-def prepare_dataset(data_path, dataset_csv, path_to_save='./numpy_data', processed_csv_path='./processed_dataset.csv'):
-    print('Starting preparing dataset...')
-    if not os.path.exists(path_to_save):
-        os.makedirs(path_to_save)
-    processed_csv = pd.DataFrame(columns=dataset_csv.columns)
-    for item in tqdm(range(len(dataset_csv))):
-        row_to_insert = []
-
-        paths_of_mix = dataset_csv.iloc[item, :].values
-        for i, p in enumerate(paths_of_mix):
-            filename_with_ext = ntpath.basename(p)
-            filename = os.path.splitext(filename_with_ext)[0]
-
-            inp, sr = librosa.load(data_path + p)
-            inp = librosa.resample(inp, sr, 8192)
-            ft_inp = librosa.stft(inp, n_fft=1024, hop_length=768, window='hann', center=True)
-
-            np_file_path = os.path.join(path_to_save, (filename + '.h5'))
-            with h5py.File(np_file_path, 'w') as hf:
-                hf.create_dataset('dataset', data=ft_inp)
-            row_to_insert.append(np_file_path)
-
-        processed_csv.loc[len(processed_csv)] = row_to_insert
-    processed_csv.to_csv(processed_csv_path, index=False)
 
 if __name__ == "__main__":
     try:
