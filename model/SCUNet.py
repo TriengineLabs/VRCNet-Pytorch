@@ -25,18 +25,27 @@ class DoubleDownConv(nn.Module):
 
 
 class DoubleUpConv(nn.Module):
-    def __init__(self, input_channel, output_channel):
+    def __init__(self, input_channel, output_channel, include_batch_norm=True):
         super(DoubleUpConv, self).__init__()
 
-        self.double_conv = nn.Sequential(
-                nn.Conv2d(input_channel, output_channel, 5, stride=1, padding=2, bias=False),
-                nn.BatchNorm2d(output_channel),
-                nn.ReLU(),
+        if include_batch_norm:
+            self.double_conv = nn.Sequential(
+                    nn.Conv2d(input_channel, output_channel, 5, stride=1, padding=2, bias=False),
+                    nn.BatchNorm2d(output_channel),
+                    nn.ReLU(),
 
-                nn.Conv2d(output_channel, output_channel, 5, stride=1, padding=2, bias=False),
-                nn.BatchNorm2d(output_channel),
-                nn.ReLU()
-                )
+                    nn.Conv2d(output_channel, output_channel, 5, stride=1, padding=2, bias=False),
+                    nn.BatchNorm2d(output_channel),
+                    nn.ReLU()
+                    )
+        else:
+            self.double_conv = nn.Sequential(
+                    nn.Conv2d(input_channel, output_channel, 5, stride=1, padding=2, bias=False),
+                    nn.ReLU(),
+
+                    nn.Conv2d(output_channel, output_channel, 5, stride=1, padding=2, bias=False),
+                    nn.ReLU()
+                    )
 
     def forward(self, x):
         x = self.double_conv(x)
