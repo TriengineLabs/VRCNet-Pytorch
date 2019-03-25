@@ -4,9 +4,10 @@ import h5py
 
 
 class WaveDataset(Dataset):
-    def __init__(self, dataframe, transforms=None):
+    def __init__(self, dataframe, transforms=None, use_log_scale=True):
         self.dataframe = dataframe
         self.transforms = transforms
+        self.use_log_scale = use_log_scale
 
     def __len__(self):
         return len(self.dataframe)
@@ -19,6 +20,8 @@ class WaveDataset(Dataset):
             with h5py.File(p, 'r') as hf:
                 data = hf['dataset'][:]
             mlc, phase = librosa.magphase(data)
+            if self.use_log_scale:
+                mlc = librosa.amplitude_to_db(mlc)
             #TODO find better way to handle even shape
             if mlc.shape[1]%2 == 0:
                 mlc = mlc[:, :-1]

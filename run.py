@@ -14,6 +14,15 @@ from pickle import UnpicklingError
 from exceptions import StopTrainingException
 from preprocess import prepare_dataset
 
+
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 parser = argparse.ArgumentParser(description='U-Net model for music source separation')
 subparsers = parser.add_subparsers(dest='mode')
 
@@ -22,6 +31,7 @@ train_p.add_argument('-d', '--data_path', required=True,
                      help='path to your preprocessed CSV data file')
 train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to train', type=int)
 train_p.add_argument('--lr', default=None, help='Learning Rate', type=float)
+train_p.add_argument('--log_scale', default='True', help='Should the input be log scaled or not', type=str2bool)
 train_p.add_argument('--batch_size', default=3, help='Batch Size', type=int)
 train_p.add_argument('--model_weight_name', default='model_weights.pt', help='file name of Model Weights', type=str)
 train_p.add_argument('--log_dir', default=None, help='Dir for logs', type=str)
@@ -68,6 +78,7 @@ def main():
         train.train(model,
                     args['data_path'],
                     scheduler=StepLR,
+                    use_log_scale=args['log_scale'],
                     gpu=args['gpu'],
                     epochs=args['epochs'],
                     lr=args['lr'],

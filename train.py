@@ -39,6 +39,7 @@ def train(model,
           optimizer=None,
           criterion=None,
           scheduler=None,
+          use_log_scale=True,
           batch_size=1,
           model_weight_name='model_weights.pt',
           lr=None,
@@ -75,7 +76,8 @@ def train(model,
     procesed_data = pd.read_csv(csv_path)
     dataset = WaveDataset(procesed_data,
                           transforms=[transforms.HorizontalCrop(128),
-                                                 transforms.Normalize()])
+                                                 transforms.Normalize()],
+                          use_log_scale = use_log_scale)
     dataloader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=False, num_workers=3)
 
