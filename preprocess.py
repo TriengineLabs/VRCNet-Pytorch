@@ -22,7 +22,8 @@ def prepare_dataset(data_path, subset=None,
         os.makedirs(path_to_save)
     processed_csv = pd.DataFrame(columns=['mix'] + list(music_list[0].targets.keys()))
     # p = multiprocessing.Pool(6)
-    rows = parmap.map(process_audio, music_list[:16], processed_csv, pm_pbar=True, pm_processes=4)
+    rows = parmap.map(process_audio, music_list, processed_csv, pm_pbar=True,
+                      pm_processes=12, path_to_save=path_to_save)
     for r in rows:
         for n in r:
             processed_csv.loc[len(processed_csv)] = n
@@ -51,8 +52,11 @@ def process_audio(audio, processed_csv,
         ft_inp = librosa.stft(inp, n_fft=n_fft, hop_length=hop_length, window='hann', center=True)
 
         # print(ft_inp.shape)
+        if ft_inp.shape[0] < slice_duration:
+            return
         for tr in range(ft_inp.shape[1] // slice_duration):
-            ft_inp_slice = ft_inp[tr * slice_duration:(tr + 1) * slice_duration]
+            ft_inp_slice = ft_inp[:, tr * slice_duration:(tr + 1) * slice_duration]
+            # print(ft_inp_slice.shape)
             filename = audio.name + '.' + p + '_' + str(tr)
 
             np_file_path = os.path.join(path_to_save, (filename + '.h5'))
