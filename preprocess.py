@@ -14,7 +14,7 @@ def prepare_dataset(data_path, subset=None,
                     resample_rate=None,
                     n_fft=2048,
                     hop_length=512,
-                    slice_duration=512):
+                    slice_duration=2):
     mus = musdb.DB(root_dir='musdb')
     music_list = mus.load_mus_tracks(subsets='train')
     print('Starting preparing dataset...')
@@ -35,7 +35,7 @@ def process_audio(audio, processed_csv,
                   resample_rate=None,
                   n_fft=2048,
                   hop_length=512,
-                  slice_duration=512):
+                  slice_duration=2):
     rows = []
 
     # paths_of_mix = dataset_csv.iloc[item, :].values
@@ -47,21 +47,21 @@ def process_audio(audio, processed_csv,
             inp = librosa.to_mono(audio.targets[p].audio.transpose())
 
         sr = audio.rate
-        if resample_rate:
-            inp = librosa.resample(inp, sr, resample_rate)
-        ft_inp = librosa.stft(inp, n_fft=n_fft, hop_length=hop_length, window='hann', center=True)
 
         # print(ft_inp.shape)
-        if ft_inp.shape[0] < slice_duration:
+        if len(inp) < slice_duration:
             return
-        for tr in range(ft_inp.shape[1] // slice_duration):
-            ft_inp_slice = ft_inp[:, tr * slice_duration:(tr + 1) * slice_duration]
+        for tr in range(len(inp) // (slice_duration*sr)):
+            inp_slice = inp[tr * sr * slice_duration:(tr + 1) * slice_duration * sr]
+            if resample_rate:
+                inp_slice = librosa.resample(inp, sr, resample_rate)
+            ft_inp = librosa.stft(inp_slice, n_fft=n_fft, hop_length=hop_length, window='hann', center=True)
             # print(ft_inp_slice.shape)
             filename = audio.name + '.' + p + '_' + str(tr)
 
             np_file_path = os.path.join(path_to_save, (filename + '.h5'))
             with h5py.File(np_file_path, 'w') as hf:
-                hf.create_dataset('dataset', data=ft_inp_slice)
+                hf.create_dataset('dataset', data=ft_inp)
             if len(rows) > tr:
                 rows[tr].append(np_file_path)
             else:
