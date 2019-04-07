@@ -15,7 +15,8 @@ def prepare_dataset(data_path, subset=None,
                     n_fft=2048,
                     hop_length=512,
                     slice_duration=2):
-    mus = musdb.DB(root_dir='musdb')
+    print('hop_length = ', hop_length)
+    mus = musdb.DB(root_dir=data_path)
     music_list = mus.load_mus_tracks(subsets='train')
     print('Starting preparing dataset...')
     if not os.path.exists(path_to_save):
@@ -23,7 +24,8 @@ def prepare_dataset(data_path, subset=None,
     processed_csv = pd.DataFrame(columns=['mix'] + list(music_list[0].targets.keys()))
     # p = multiprocessing.Pool(6)
     rows = parmap.map(process_audio, music_list, processed_csv, pm_pbar=True,
-                      pm_processes=12, path_to_save=path_to_save)
+                      pm_processes=6, path_to_save=path_to_save, n_fft=n_fft, 
+                      resample_rate=resample_rate, hop_length=hop_length, slice_duration=slice_duration)
     for r in rows:
         for n in r:
             processed_csv.loc[len(processed_csv)] = n

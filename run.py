@@ -50,7 +50,9 @@ preprocess_p.add_argument('-s', '--data_subset', required=True,
 preprocess_p.add_argument('-o', '--out_dir', default='./numpy_data', help='Directory to save processed data')
 preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_dataset.csv',
                           help='Path to save processed CSV')
-
+preprocess_p.add_argument('-hl', '--hop_length', help='hop length value of stft', default=512)
+preprocess_p.add_argument('-ws', '--n_fft', help='n_fft parameter  value of stft', default=2048)
+preprocess_p.add_argument('-sd', '--slice_duration', help='duration in seconds of slice to be cut before stft', default=2)
 args = vars(parser.parse_args())
 
 def main():
@@ -59,9 +61,11 @@ def main():
         parser.print_help(sys.stderr)
         sys.exit(1)
     if args['mode'] == 'preprocess':
+        print('args data_path ', args['data_path'])
+        print('args hop_length', args['hop_length'])
         # Read audio files once and store them with numpy extension for quicker processing during training
         # Make PREPARATION_NEEDED=True if dataset is new/changed, else set it False
-        prepare_dataset(args['data_path'], args['data_subset'], args['out_dir'], args['processed_csv_dir'])
+        prepare_dataset(args['data_path'], args['data_subset'], args['out_dir'], args['processed_csv_dir'], n_fft=args['n_fft'], hop_length=args['hop_length'], slice_duration=args['slice_duration'])
     elif args['mode'] == 'train':
         # Defining model
         model = Generator(1)
