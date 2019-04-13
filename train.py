@@ -21,9 +21,10 @@ EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
 torch.cuda.manual_seed(42)
 
+
 def saveInfoFile(train_info_file, details):
     a = []
-    details['end_time': str(datetime.datetime.now())]
+    details['end_time'] = str(datetime.datetime.now())
     if not os.path.isfile(train_info_file):
         a.append(details)
         with open(train_info_file, mode='w') as f:
@@ -36,20 +37,23 @@ def saveInfoFile(train_info_file, details):
         with open(train_info_file, mode='w') as f:
             f.write(json.dumps(feeds, indent=2))
 
+
 def train(model,
-          csv_path,
+          train_csv,
+          validation_csv=None,
           epochs=15,
           gpu=True,
           optimizer=None,
           criterion=None,
           scheduler=None,
-          use_log_scale=True,
+          use_log_scale=False,
           batch_size=1,
           model_weight_name='model_weights.pt',
           lr=None,
           log_dir=None,
           log_name=None,
-          train_info_file=None):
+          train_info_file=None,
+          n_workers=1):
     device = 'cuda' if gpu else 'cpu'
     model.to(device)
 
@@ -67,7 +71,8 @@ def train(model,
     scheduler = scheduler(optimizer, step_size=100, gamma=0.999) if scheduler else None
     train_info_file = train_info_file if train_info_file else model_weight_name + '.log'
 
-    details = {'CSV_path': csv_path,
+    details = {'train_csv_path': train_csv,
+               'validation_csv_path': train_csv,
                'start_time': str(datetime.datetime.now()),
                'epochs': epochs,
                'gpu': gpu,
@@ -80,21 +85,30 @@ def train(model,
                'log_dir': log_dir,
                'log_name': log_name}
 
-    procesed_data = pd.read_csv(csv_path)
-    dataset = WaveDataset(procesed_data,
+    train_data = pd.read_csv(train_csv)
+    dataset = WaveDataset(train_data,
                           # transforms=[transforms.HorizontalCrop(128),
-                                                 # transforms.Normalize()],
+                          # transforms.Normalize()],
                           # use_log_scale = use_log_scale)
                           transforms=[transforms.Normalize()],
-                                      use_log_scale=False)
+                          use_log_scale=False)
     dataloader = DataLoader(dataset, batch_size=batch_size,
-                            shuffle=True, num_workers=12)
-
+                            shuffle=True, num_workers=n_workers)
+    if validation_csv:
+        valid_data = pd.read_csv(validation_csv)
+        valid_dataset = WaveDataset(valid_data,
+                                    transforms=[transforms.Normalize()],
+                                    use_log_scale=False)
+        valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size,
+                                      shuffle=True, num_workers=n_workers)
     unimproved_epochs = 0
     best_loss = 1000
     best_model_dict = None
+    epoch_mean_loss = None
+    valid_mean_loss = None
 
     for e in range(epochs):
+        model.train()
         try:
             print('Starting Epoch', str(e) + '/' + str(epochs))
             epoch_full_loss = 0
@@ -120,10 +134,31 @@ def train(model,
             epoch_mean_loss = epoch_full_loss / len(dataloader)
             if log_dir and log_name:
                 log_value('Training Epoch Loss', epoch_mean_loss)
-            print('Epoch completed, Loss is: ', epoch_mean_loss)
+
+            if validation_csv:
+                valid_full_loss = 0
+                model.eval()
+                for n_track, lst in enumerate(dataloader):
+                    with torch.no_grad:
+                        normalized_mix = lst[0].float().to(device)
+                        original_mix = lst[1].float().to(device)
+                        source1 = lst[2].float().to(device)
+                        normalized_mix = normalized_mix.unsqueeze(1)
+                        mask = model.forward(normalized_mix.squeeze(1))
+                        mask = mask.squeeze(1)
+                        out = mask * original_mix
+                        loss = criterion(out, source1)
+                        valid_full_loss += loss.item()
+
+                valid_mean_loss = epoch_full_loss / len(dataloader)
+
+                print('Epoch completed, Training Loss: ', epoch_mean_loss, '\tValidation loss: ', valid_mean_loss)
+            else:
+                print('Epoch completed, Training Loss: ', epoch_mean_loss)
 
             # Early Stopping
-            if epoch_mean_loss > best_loss:
+            eval_loss = valid_mean_loss if validation_csv else epoch_mean_loss
+            if eval_loss > best_loss:
                 unimproved_epochs += 1
                 if unimproved_epochs > EARLY_STOPPING_EPOCHS:
                     print('Early stopping happened')
@@ -132,18 +167,24 @@ def train(model,
                 best_model_dict = deepcopy(model.state_dict())
                 print('Saving the model!!')
                 torch.save(best_model_dict, ('incomplete_' + model_weight_name))
-                best_loss = epoch_mean_loss
+                best_loss = eval_loss
                 unimproved_epochs = 0
         except KeyboardInterrupt:
             if best_model_dict:
                 print('Saving the model!!')
                 torch.save(best_model_dict, ('interrupted_' + model_weight_name))
-                details['min_loss'] = best_loss
+                details['eval_loss'] = best_loss
+                details['train_loss'] = epoch_mean_loss
+                details['valid_loss'] = valid_mean_loss
+
                 details['stopped_on'] = e
                 saveInfoFile(train_info_file, details)
             raise StopTrainingException(e)
 
-    details['min_loss'] = best_loss
+    details['eval_loss'] = best_loss
+    details['train_loss'] = epoch_mean_loss
+    details['valid_loss'] = valid_mean_loss
+
     saveInfoFile(train_info_file, details)
 
     torch.save(best_model_dict, model_weight_name)
