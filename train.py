@@ -1,18 +1,21 @@
 import json
 import os
+import datetime
 
-import torch
-from icecream import ic
-from torch import nn
-from torch import optim
-from torch.utils.data import DataLoader
 from tqdm import tqdm
-from Dataset import WaveDataset
-from exceptions import StopTrainingException
-import transforms
+from icecream import ic
 import pandas as pd
 from copy import deepcopy
 from tensorboard_logger import configure, log_value
+
+import torch
+from torch import nn
+from torch import optim
+from torch.utils.data import DataLoader
+
+from Dataset import WaveDataset
+from exceptions import StopTrainingException
+import transforms
 
 EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
@@ -20,6 +23,7 @@ torch.cuda.manual_seed(42)
 
 def saveInfoFile(train_info_file, details):
     a = []
+    details['end_time': str(datetime.datetime.now())]
     if not os.path.isfile(train_info_file):
         a.append(details)
         with open(train_info_file, mode='w') as f:
@@ -59,27 +63,32 @@ def train(model,
         for g in optimizer.param_groups:
             g['lr'] = lr
 
+    criterion = criterion if criterion else nn.L1Loss()
+    scheduler = scheduler(optimizer, step_size=100, gamma=0.999) if scheduler else None
+    train_info_file = train_info_file if train_info_file else model_weight_name + '.log'
+
     details = {'CSV_path': csv_path,
+               'start_time': str(datetime.datetime.now()),
                'epochs': epochs,
                'gpu': gpu,
                'optimizer': str(optimizer),
                'criterion': str(criterion),
+               'scheduler': str(scheduler),
                'lr': lr,
                'batch_size': batch_size,
                'model_weight_name': model_weight_name,
                'log_dir': log_dir,
                'log_name': log_name}
 
-    criterion = criterion if criterion else nn.L1Loss()
-    scheduler = scheduler(optimizer, step_size=100, gamma=0.999) if scheduler else None
-
     procesed_data = pd.read_csv(csv_path)
     dataset = WaveDataset(procesed_data,
-                          transforms=[transforms.HorizontalCrop(128),
-                                                 transforms.Normalize()],
-                          use_log_scale = use_log_scale)
+                          # transforms=[transforms.HorizontalCrop(128),
+                                                 # transforms.Normalize()],
+                          # use_log_scale = use_log_scale)
+                          transforms=[transforms.Normalize()],
+                                      use_log_scale=False)
     dataloader = DataLoader(dataset, batch_size=batch_size,
-                            shuffle=False, num_workers=3)
+                            shuffle=True, num_workers=12)
 
     unimproved_epochs = 0
     best_loss = 1000
@@ -94,12 +103,12 @@ def train(model,
                 normalized_mix = lst[0].float().to(device)
                 original_mix = lst[1].float().to(device)
                 source1 = lst[2].float().to(device)
-
+                normalized_mix = normalized_mix.unsqueeze(1)
                 optimizer.zero_grad()
-                mask = model.forward(normalized_mix)
-                mask = mask.squeeze(0).squeeze(1)
+                mask = model.forward(normalized_mix.squeeze(1))
+                mask = mask.squeeze(1)
+                # ic(mask.shape, original_mix.shape, normalized_mix.shape)
                 out = mask * original_mix
-
                 loss = criterion(out, source1)
                 loss.backward()
                 optimizer.step()
@@ -121,6 +130,8 @@ def train(model,
                     break
             else:
                 best_model_dict = deepcopy(model.state_dict())
+                print('Saving the model!!')
+                torch.save(best_model_dict, ('incomplete_' + model_weight_name))
                 best_loss = epoch_mean_loss
                 unimproved_epochs = 0
         except KeyboardInterrupt:

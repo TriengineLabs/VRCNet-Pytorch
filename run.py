@@ -9,11 +9,11 @@ import train
 from torch.optim.lr_scheduler import StepLR
 
 from model.SCUNet import Generator
+# from model.ResUNet import Generator
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
 from exceptions import StopTrainingException
 from preprocess import prepare_dataset
-
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -31,7 +31,7 @@ train_p.add_argument('-d', '--data_path', required=True,
                      help='path to your preprocessed CSV data file')
 train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to train', type=int)
 train_p.add_argument('--lr', default=None, help='Learning Rate', type=float)
-train_p.add_argument('--log_scale', default='True', help='Should the input be log scaled or not', type=str2bool)
+train_p.add_argument('--log_scale', default='False', help='Should the input be log scaled or not', type=str2bool)
 train_p.add_argument('--batch_size', default=3, help='Batch Size', type=int)
 train_p.add_argument('--model_weight_name', default='model_weights.pt', help='file name of Model Weights', type=str)
 train_p.add_argument('--log_dir', default=None, help='Dir for logs', type=str)
@@ -81,7 +81,7 @@ def main():
         # Start training
         train.train(model,
                     args['data_path'],
-                    scheduler=StepLR,
+                    # scheduler=StepLR,
                     use_log_scale=args['log_scale'],
                     gpu=args['gpu'],
                     epochs=args['epochs'],
@@ -96,4 +96,4 @@ if __name__ == "__main__":
     try:
         main()
     except StopTrainingException as e:
-        print (e)
+        print(e)
