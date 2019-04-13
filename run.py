@@ -100,7 +100,7 @@ def main():
                     log_dir=args['log_dir'],
                     log_name=args['log_name'],
                     train_info_file=args['train_info_file'],
-                    n_workers=args['n_workers'])
+                    n_workers=args['workers'])
 
 
 if __name__ == "__main__":

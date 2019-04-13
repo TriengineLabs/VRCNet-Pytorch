@@ -139,7 +139,7 @@ def train(model,
                 valid_full_loss = 0
                 model.eval()
                 for n_track, lst in enumerate(tqdm(valid_dataloader)):
-                    with torch.no_grad:
+                    with torch.no_grad():
                         normalized_mix = lst[0].float().to(device)
                         original_mix = lst[1].float().to(device)
                         source1 = lst[2].float().to(device)
@@ -150,7 +150,7 @@ def train(model,
                         loss = criterion(out, source1)
                         valid_full_loss += loss.item()
 
-                valid_mean_loss = epoch_full_loss / len(dataloader)
+                valid_mean_loss = valid_full_loss / len(dataloader)
 
                 print('Epoch completed, Training Loss: ', epoch_mean_loss, '\tValidation loss: ', valid_mean_loss)
             else:
