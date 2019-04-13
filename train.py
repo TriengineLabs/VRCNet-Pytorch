@@ -138,7 +138,7 @@ def train(model,
             if validation_csv:
                 valid_full_loss = 0
                 model.eval()
-                for n_track, lst in enumerate(dataloader):
+                for n_track, lst in enumerate(tqdm(valid_dataloader)):
                     with torch.no_grad:
                         normalized_mix = lst[0].float().to(device)
                         original_mix = lst[1].float().to(device)
