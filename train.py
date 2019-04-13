@@ -54,7 +54,7 @@ def train(model,
           log_name=None,
           train_info_file=None,
           n_workers=1):
-    device = 'cuda' if gpu else 'cpu'
+    device = torch.device('cuda') if gpu else torch.device('cpu')
     model.to(device)
 
     if log_dir and log_name:
@@ -170,7 +170,7 @@ def train(model,
                 best_loss = eval_loss
                 unimproved_epochs = 0
         except KeyboardInterrupt:
-            if best_model_dict:
+            if best_model_dict():
                 print('Saving the model!!')
                 torch.save(best_model_dict, ('interrupted_' + model_weight_name))
                 details['eval_loss'] = best_loss

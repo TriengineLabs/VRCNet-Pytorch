@@ -15,6 +15,7 @@ from pickle import UnpicklingError
 from exceptions import StopTrainingException
 from preprocess import prepare_dataset
 
+
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -23,12 +24,15 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+
 parser = argparse.ArgumentParser(description='U-Net model for music source separation')
 subparsers = parser.add_subparsers(dest='mode')
 
 train_p = subparsers.add_parser('train')
 train_p.add_argument('-d', '--data_path', required=True,
                      help='path to your preprocessed CSV data file')
+train_p.add_argument('-v', '--valid_path', required=False,
+                     help='path to your preprocessed validation CSV file', default=None)
 train_p.add_argument('-e', '--epochs', default='5', help='Number of epochs to train', type=int)
 train_p.add_argument('--lr', default=None, help='Learning Rate', type=float)
 train_p.add_argument('--log_scale', default='False', help='Should the input be log scaled or not', type=str2bool)
@@ -52,8 +56,10 @@ preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_data
                           help='Path to save processed CSV')
 preprocess_p.add_argument('-hl', '--hop_length', help='hop length value of stft', default=512)
 preprocess_p.add_argument('-ws', '--n_fft', help='n_fft parameter  value of stft', default=2048)
-preprocess_p.add_argument('-sd', '--slice_duration', help='duration in seconds of slice to be cut before stft', default=2)
+preprocess_p.add_argument('-sd', '--slice_duration', help='duration in seconds of slice to be cut before stft',
+                          default=2)
 args = vars(parser.parse_args())
+
 
 def main():
     args = vars(parser.parse_args())
@@ -65,7 +71,8 @@ def main():
         print('args hop_length', args['hop_length'])
         # Read audio files once and store them with numpy extension for quicker processing during training
         # Make PREPARATION_NEEDED=True if dataset is new/changed, else set it False
-        prepare_dataset(args['data_path'], args['data_subset'], args['out_dir'], args['processed_csv_dir'], n_fft=args['n_fft'], hop_length=args['hop_length'], slice_duration=args['slice_duration'])
+        prepare_dataset(args['data_path'], args['data_subset'], args['out_dir'], args['processed_csv_dir'],
+                        n_fft=args['n_fft'], hop_length=args['hop_length'], slice_duration=args['slice_duration'])
     elif args['mode'] == 'train':
         # Defining model
         model = Generator(1)
@@ -80,7 +87,8 @@ def main():
                 return
         # Start training
         train.train(model,
-                    args['data_path'],
+                    train_csv=args['data_path'],
+                    validation_csv=args['valid_path'],
                     # scheduler=StepLR,
                     use_log_scale=args['log_scale'],
                     gpu=args['gpu'],
@@ -91,6 +99,7 @@ def main():
                     log_dir=args['log_dir'],
                     log_name=args['log_name'],
                     train_info_file=args['train_info_file'])
+
 
 if __name__ == "__main__":
     try:
