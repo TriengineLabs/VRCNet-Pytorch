@@ -44,8 +44,8 @@ train_p.add_argument('--pretrained_model', default='', help='file name of PreTra
 train_p.add_argument('--train_info_file', default=None, help='File to store training info', type=str)
 
 gpu_group = train_p.add_mutually_exclusive_group()
-gpu_group.add_argument('--cpu', action='store_true', help='train on CPU')
-gpu_group.add_argument('--gpu', action='store_false', help='train on GPU')
+gpu_group.add_argument('--cpu', action='store_false', help='train on CPU')
+gpu_group.add_argument('--gpu', action='store_true', help='train on GPU')
 
 preprocess_p = subparsers.add_parser('preprocess')
 preprocess_p.add_argument('-d', '--data_path', required=True, help='path to your data directory')
