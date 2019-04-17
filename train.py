@@ -21,7 +21,6 @@ EARLY_STOPPING_EPOCHS = 100
 torch.manual_seed(42)
 torch.cuda.manual_seed(42)
 
-
 def saveInfoFile(train_info_file, details):
     a = []
     details['end_time'] = str(datetime.datetime.now())
@@ -36,7 +35,6 @@ def saveInfoFile(train_info_file, details):
         feeds.append(details)
         with open(train_info_file, mode='w') as f:
             f.write(json.dumps(feeds, indent=2))
-
 
 def train(model,
           train_csv,
@@ -150,7 +148,7 @@ def train(model,
                         loss = criterion(out, source1)
                         valid_full_loss += loss.item()
 
-                valid_mean_loss = valid_full_loss / len(dataloader)
+                valid_mean_loss = valid_full_loss / len(valid_dataloader)
 
                 print('Epoch completed, Training Loss: ', epoch_mean_loss, '\tValidation loss: ', valid_mean_loss)
             else:
@@ -170,7 +168,7 @@ def train(model,
                 best_loss = eval_loss
                 unimproved_epochs = 0
         except KeyboardInterrupt:
-            if best_model_dict():
+            if best_model_dict:
                 print('Saving the model!!')
                 torch.save(best_model_dict, ('interrupted_' + model_weight_name))
                 details['eval_loss'] = best_loss
