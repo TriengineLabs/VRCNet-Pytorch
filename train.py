@@ -6,7 +6,7 @@ from tqdm import tqdm
 from icecream import ic
 import pandas as pd
 from copy import deepcopy
-from tensorboard_logger import configure, log_value
+# from tensorboard_logger import configure, log_value
 
 import torch
 from torch import nn
@@ -39,6 +39,7 @@ def saveInfoFile(train_info_file, details):
 
 
 def train(model,
+          model_type,
           train_csv,
           validation_csv=None,
           epochs=15,
@@ -86,18 +87,23 @@ def train(model,
                'log_name': log_name}
 
     train_data = pd.read_csv(train_csv)
+
+    transforms_to_do = [transforms.Normalize()]
+    if model_type == 'VSegm':
+        transforms_to_do.append(transforms.Resize(224, 224))
+
     dataset = WaveDataset(train_data,
                           # transforms=[transforms.HorizontalCrop(128),
                           # transforms.Normalize()],
                           # use_log_scale = use_log_scale)
-                          transforms=[transforms.Normalize()],
+                          transforms=transforms_to_do,
                           use_log_scale=False)
     dataloader = DataLoader(dataset, batch_size=batch_size,
                             shuffle=True, num_workers=n_workers)
     if validation_csv:
         valid_data = pd.read_csv(validation_csv)
         valid_dataset = WaveDataset(valid_data,
-                                    transforms=[transforms.Normalize()],
+                                    transforms=transforms_to_do,
                                     use_log_scale=False)
         valid_dataloader = DataLoader(valid_dataset, batch_size=batch_size,
                                       shuffle=True, num_workers=n_workers)
@@ -117,9 +123,15 @@ def train(model,
                 normalized_mix = lst[0].float().to(device)
                 original_mix = lst[1].float().to(device)
                 source1 = lst[2].float().to(device)
+
                 normalized_mix = normalized_mix.unsqueeze(1)
                 optimizer.zero_grad()
-                mask = model.forward(normalized_mix.squeeze(1))
+
+                x = normalized_mix
+                # if 'VSegm' == model_type:
+                #     x = torch.cat((x, x, x), 1)
+
+                mask = model.forward(x)
                 mask = mask.squeeze(1)
                 # ic(mask.shape, original_mix.shape, normalized_mix.shape)
                 out = mask * original_mix
