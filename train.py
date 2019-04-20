@@ -88,9 +88,7 @@ def train(model,
 
     train_data = pd.read_csv(train_csv)
 
-    transforms_to_do = [transforms.Normalize()]
-    if model_type == 'VSegm':
-        transforms_to_do.append(transforms.Resize(224, 224))
+    transforms_to_do = [transforms.Normalize(), transforms.ToTensor()]
 
     dataset = WaveDataset(train_data,
                           # transforms=[transforms.HorizontalCrop(128),
@@ -122,7 +120,7 @@ def train(model,
                 # TODO change source hardcoding, handle unequal size of mix and source
                 normalized_mix = lst[0].float().to(device)
                 original_mix = lst[1].float().to(device)
-                source1 = lst[2].float().to(device)
+                source1 = lst[-1].float().to(device)
 
                 normalized_mix = normalized_mix.unsqueeze(1)
                 optimizer.zero_grad()

@@ -3,6 +3,17 @@ import torch.nn as nn
 import skimage
 import numpy as np
 
+class ToTensor(nn.Module):
+    def __init__(self):
+        super(ToTensor, self).__init__()
+    
+    def forward(self, tracks):
+        with torch.no_grad():
+            for i, el in enumerate(tracks):
+                tracks[i] = torch.Tensor(el)
+        return tracks
+
+
 class Normalize(nn.Module):
     def __init__(self):
         super(Normalize, self).__init__()
