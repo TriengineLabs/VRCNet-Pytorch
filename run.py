@@ -9,12 +9,18 @@ import train
 from torch.optim.lr_scheduler import StepLR
 
 from model.SCUNet import Generator
+from model.VSegm import VSegm
+from model.ResUNET import Generator as ResUNET
+from model.InceptionSegm import InceptionSegm
+from model.AlexSegm import AlexSegm
 # from model.ResUNet import Generator
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
 from exceptions import StopTrainingException
 from preprocess import prepare_dataset
 
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -43,6 +49,7 @@ train_p.add_argument('--log_name', default=None, help='Name for this experiment\
 train_p.add_argument('--pretrained_model', default='', help='file name of PreTrained Weights to be loaded', type=str)
 train_p.add_argument('--train_info_file', default=None, help='File to store training info', type=str)
 train_p.add_argument('-j', '--workers', default=1, help='Number of workers', type=int)
+train_p.add_argument('--model_name', default='SCUNet', help='File to store training info', type=str)
 
 gpu_group = train_p.add_mutually_exclusive_group()
 gpu_group.add_argument('--cpu', action='store_false', help='train on CPU')
@@ -76,7 +83,15 @@ def main():
                         n_fft=args['n_fft'], hop_length=args['hop_length'], slice_duration=args['slice_duration'])
     elif args['mode'] == 'train':
         # Defining model
-        model = Generator(1)
+        if 'SCUNet' == args['model_name']:
+            model = Generator(1)
+        elif 'VSegm' == args['model_name']:
+            model = VSegm()
+        elif 'ResUNET' == args['model_name']:
+            model = ResUNET()
+        else:
+            print('Sorry. That model currently is not implemented')
+            return
 
         # If pre-trained weights are specified, load them:
         if args['pretrained_model']:
@@ -88,6 +103,7 @@ def main():
                 return
         # Start training
         train.train(model,
+                    model_type=args['model_name'],
                     train_csv=args['data_path'],
                     validation_csv=args['valid_path'],
                     # scheduler=StepLR,

@@ -87,7 +87,7 @@ class Generator(nn.Module):
         )
 
     def forward(self, x):
-        x = x.unsqueeze(1)
+        # x = x.unsqueeze(1)
 
         d0 = self.first_layer(x)
 

@@ -6,6 +6,7 @@ import h5py
 class WaveDataset(Dataset):
     def __init__(self, dataframe, transforms=None, use_log_scale=True):
         self.dataframe = dataframe
+        self.dataframe = self.dataframe[['mix', 'vocals']]
         self.transforms = transforms
         self.use_log_scale = use_log_scale
 
