@@ -10,12 +10,17 @@ from torch.optim.lr_scheduler import StepLR
 
 from model.SCUNet import Generator
 from model.VSegm import VSegm
+from model.ResSegm import ResSegm
+from model.InceptionSegm import InceptionSegm
+from model.AlexSegm import AlexSegm
 # from model.ResUNet import Generator
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
 from exceptions import StopTrainingException
 from preprocess import prepare_dataset
 
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -81,6 +86,12 @@ def main():
             model = Generator(1)
         elif 'VSegm' == args['model_name']:
             model = VSegm()
+        elif 'ResSegm' == args['model_name']:
+            model = ResSegm()
+        elif 'Inception' == args['model_name']:
+            model = InceptionSegm()
+        elif 'AlexSegm' == args['model_name']:
+            model = AlexSegm()
 
         # If pre-trained weights are specified, load them:
         if args['pretrained_model']:

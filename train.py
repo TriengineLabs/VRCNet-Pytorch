@@ -122,10 +122,9 @@ def train(model,
                 original_mix = lst[1].float().to(device)
                 source1 = lst[-1].float().to(device)
 
-                normalized_mix = normalized_mix.unsqueeze(1)
+                x = normalized_mix.unsqueeze(1)
                 optimizer.zero_grad()
 
-                x = normalized_mix
                 # if 'VSegm' == model_type:
                 #     x = torch.cat((x, x, x), 1)
 
@@ -148,19 +147,20 @@ def train(model,
             if validation_csv:
                 valid_full_loss = 0
                 model.eval()
-                for n_track, lst in enumerate(dataloader):
-                    with torch.no_grad:
+                for n_track, lst in enumerate(valid_dataloader):
+                    with torch.no_grad():
                         normalized_mix = lst[0].float().to(device)
                         original_mix = lst[1].float().to(device)
-                        source1 = lst[2].float().to(device)
-                        normalized_mix = normalized_mix.unsqueeze(1)
-                        mask = model.forward(normalized_mix.squeeze(1))
+                        source1 = lst[-1].float().to(device)
+                        x = normalized_mix.unsqueeze(1)
+                        
+                        mask = model.forward(x)
                         mask = mask.squeeze(1)
                         out = mask * original_mix
                         loss = criterion(out, source1)
                         valid_full_loss += loss.item()
 
-                valid_mean_loss = epoch_full_loss / len(dataloader)
+                valid_mean_loss = epoch_full_loss / len(valid_dataloader)
 
                 print('Epoch completed, Training Loss: ', epoch_mean_loss, '\tValidation loss: ', valid_mean_loss)
             else:
