@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-import pandas as pd
-import ntpath
 import torch
 import argparse
 import train
@@ -10,10 +8,8 @@ from torch.optim.lr_scheduler import StepLR
 
 from model.SCUNet import Generator
 from model.VSegm import VSegm
-from model.ResUNET import Generator as ResUNET
-from model.InceptionSegm import InceptionSegm
-from model.AlexSegm import AlexSegm
-# from model.ResUNet import Generator
+from model.ResUNet import Generator as ResUNet
+from calculate_score import calculate_score
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
 from exceptions import StopTrainingException
@@ -21,6 +17,7 @@ from preprocess import prepare_dataset
 
 torch.manual_seed(42)
 torch.cuda.manual_seed(42)
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -64,8 +61,16 @@ preprocess_p.add_argument('-p', '--processed_csv_dir', default='./processed_data
                           help='Path to save processed CSV')
 preprocess_p.add_argument('-hl', '--hop_length', help='hop length value of stft', default=512)
 preprocess_p.add_argument('-ws', '--n_fft', help='n_fft parameter  value of stft', default=2048)
+preprocess_p.add_argument('-j', '--workers', default=1, help='Number of workers', type=int)
 preprocess_p.add_argument('-sd', '--slice_duration', help='duration in seconds of slice to be cut before stft',
                           default=2)
+
+test_p = subparsers.add_parser('test')
+test_p.add_argument('--model_weight_name', required=True, help='File name of Model Weights', type=str)
+test_p.add_argument('--data_path', required=True, help='Path to your data directory', type=str)
+test_p.add_argument('-j', '--workers', default=1, help='Number of workers', type=int)
+test_p.add_argument('--model_name', default='SCUNet', help='File to store training info', type=str)
+
 args = vars(parser.parse_args())
 
 
@@ -80,15 +85,16 @@ def main():
         # Read audio files once and store them with numpy extension for quicker processing during training
         # Make PREPARATION_NEEDED=True if dataset is new/changed, else set it False
         prepare_dataset(args['data_path'], args['data_subset'], args['out_dir'], args['processed_csv_dir'],
-                        n_fft=args['n_fft'], hop_length=args['hop_length'], slice_duration=args['slice_duration'])
+                        n_fft=args['n_fft'], hop_length=args['hop_length'], slice_duration=args['slice_duration'],
+                        n_workers=args['workers'])
     elif args['mode'] == 'train':
         # Defining model
         if 'SCUNet' == args['model_name']:
             model = Generator(1)
         elif 'VSegm' == args['model_name']:
             model = VSegm()
-        elif 'ResUNET' == args['model_name']:
-            model = ResUNET()
+        elif 'ResUNet' == args['model_name']:
+            model = ResUNet()
         else:
             print('Sorry. That model currently is not implemented')
             return
@@ -117,6 +123,18 @@ def main():
                     log_name=args['log_name'],
                     train_info_file=args['train_info_file'],
                     n_workers=args['workers'])
+    elif args['mode'] == 'test':
+        if 'SCUNet' == args['model_name']:
+            model = Generator(1)
+        elif 'VSegm' == args['model_name']:
+            model = VSegm()
+        elif 'ResUNet' == args['model_name']:
+            model = ResUNet()
+        else:
+            print('Sorry. That model currently is not implemented')
+            return
+        calculate_score(model, model_weights_path=args['model_weight_name'], musdb_dir=args['data_path'],
+                        n_workers=args['workers'])
 
 
 if __name__ == "__main__":

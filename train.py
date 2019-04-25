@@ -2,6 +2,7 @@ import json
 import os
 import datetime
 
+from tensorboard_logger import log_value, configure
 from tqdm import tqdm
 from icecream import ic
 import pandas as pd
