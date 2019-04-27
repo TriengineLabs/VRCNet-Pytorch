@@ -5,7 +5,7 @@ import torch
 import argparse
 import train
 from torch.optim.lr_scheduler import StepLR
-
+from model.VRCNet import VRCNet
 from model.SCUNet import Generator
 from model.VSegm import VSegm
 from model.ResUNet import Generator as ResUNet
@@ -95,6 +95,8 @@ def main():
             model = VSegm()
         elif 'ResUNet' == args['model_name']:
             model = ResUNet()
+        elif 'VRCNet' == args['model_name']:
+            model = VRCNet()
         else:
             print('Sorry. That model currently is not implemented')
             return
