@@ -29,13 +29,21 @@ def calculate_score(model, model_weights_path, musdb_dir='musdb', n_workers=1, n
 
 def calculate_SDR(music, model, n_fft=2048,
                   hop_length=512, slice_duration=2):
+    model.eval()
     scores = []
     sr = music.rate
     ind = 0
+    mixture = librosa.to_mono(music.audio.transpose())
+    vocal = librosa.to_mono(music.targets['vocals'].audio.transpose())
     for i in range(0, len(music.audio), slice_duration * sr):
         ind += 1
-        mixture = librosa.to_mono(music.audio.transpose())
         mixture = mixture[i:i + slice_duration * sr]
+        vocal = vocal[i:i + slice_duration * sr]
+        
+        if np.all(vocal == 0):
+            # print('[!] -  all 0s, skipping')
+            continue
+        
         if i + 2 * sr >= len(music.audio):
             break
         resampled_mixture = mixture
@@ -43,19 +51,13 @@ def calculate_SDR(music, model, n_fft=2048,
         magnitude_mixture_stft, mixture_phase = librosa.magphase(mixture_stft)
         normalized_magnitude_mixture_stft = torch.Tensor(Normalize().forward([magnitude_mixture_stft])[0])
 
-        vocal = librosa.to_mono(music.targets['vocals'].audio.transpose())
         sr_v = music.rate
-        vocal = vocal[i:i + slice_duration * sr]
-        model.eval()
         with torch.no_grad():
             mask = model.forward(normalized_magnitude_mixture_stft.unsqueeze(0)).squeeze(0)
             out = mask * torch.Tensor(normalized_magnitude_mixture_stft)
         predicted_vocal_stft = out.numpy() * mixture_phase
         predicted_vocal_audio = librosa.istft(predicted_vocal_stft.squeeze(0), win_length=n_fft,
                                               hop_length=hop_length, window='hann', center='True')
-        if np.all(vocal == 0):
-            # print('[!] -  all 0s, skipping')
-            continue
         try:
             scores.append(
                 mir_eval.separation.bss_eval_sources(vocal[:predicted_vocal_audio.shape[0]],
