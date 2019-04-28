@@ -4,12 +4,15 @@ import torch.nn.functional as F
 from icecream import ic
 from torchvision.models.resnet import resnet18
 
-
 class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
         resnet = resnet18(pretrained=True)
+
+        self.layer_prep = nn.Sequential(nn.Conv2d(1, 3, kernel_size=5,
+                                            stride=1, padding=2),
+                                        nn.ReLU())
 
         self.layer0 = nn.Sequential(
             resnet.conv1,
@@ -61,7 +64,11 @@ class Generator(nn.Module):
         )
 
     def forward(self, inputs):
-        l0 = self.layer0(torch.cat([inputs.unsqueeze(1), inputs.unsqueeze(1), inputs.unsqueeze(1)], dim=1))
+        # l0 = self.layer0(torch.cat([inputs.unsqueeze(1), inputs.unsqueeze(1), inputs.unsqueeze(1)], dim=1))
+        l_prep = self.layer_prep(inputs)
+        #print(torch.cat([inputs.unsqueeze(1), inputs.unsqueeze(1), inputs.unsqueeze(1)], dim=1).shape)
+        #print(l_prep.shape)
+        l0 = self.layer0(l_prep)
         l0_maxpool = self.maxpool1(l0)
         l1 = self.layer1(l0_maxpool)
         l2 = self.layer2(l1)
@@ -80,7 +87,7 @@ class Generator(nn.Module):
         u1 = self.upsample1(F.interpolate(c1, l0.shape[2:]))
 
         c0 = torch.cat([l0, u1], dim=1)
-        u0 = self.upsample0(F.interpolate(c0, inputs.shape[1:]))
+        u0 = self.upsample0(F.interpolate(c0, inputs.shape[2:]))
         o0 = self.final0(u0)
 
         return o0
