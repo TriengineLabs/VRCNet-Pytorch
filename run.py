@@ -9,6 +9,7 @@ from model.VRCNet import VRCNet
 from model.SCUNet import Generator
 from model.VSegm import VSegm
 from model.ResUNet import Generator as ResUNet
+from model.VCNet import VCNet
 from calculate_score import calculate_score
 from torch.optim.lr_scheduler import StepLR
 from pickle import UnpicklingError
@@ -97,6 +98,8 @@ def main():
             model = ResUNet()
         elif 'VRCNet' == args['model_name']:
             model = VRCNet()
+        elif 'VCNet' == args['model_name']:
+            model = VCNet()
         else:
             print('Sorry. That model currently is not implemented')
             return
