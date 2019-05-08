@@ -123,7 +123,7 @@ class VCNet(nn.Module):
         self.up0 = UpBlock(64, 32)
 
         self.last_conv = nn.Sequential(
-                nn.Conv2d(32, 1,
+                nn.Conv2d(32, output_channels,
                 kernel_size = 5, stride=1,
                 padding=2),
                 nn.Sigmoid()

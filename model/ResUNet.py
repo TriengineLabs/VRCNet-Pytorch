@@ -5,7 +5,7 @@ from icecream import ic
 from torchvision.models.resnet import resnet18
 
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, output_channels=1):
         super(Generator, self).__init__()
 
         resnet = resnet18(pretrained=True)
@@ -58,7 +58,7 @@ class Generator(nn.Module):
         )
 
         self.final0 = nn.Sequential(
-            nn.Conv2d(96, 1, 1),
+            nn.Conv2d(96, output_channels, 1),
             # nn.Conv2d(96, 3, kernel_size=3, stride=1, padding=1),
             nn.Sigmoid()
         )
