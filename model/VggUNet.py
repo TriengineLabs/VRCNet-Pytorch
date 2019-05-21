@@ -13,11 +13,6 @@ class UpBlock(nn.Module):
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=False),
-                # nn.BatchNorm2d(output_channels),
-                # nn.ReLU(),
-                # nn.Conv2d(output_channels, output_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=False),
                 nn.BatchNorm2d(output_channels),
                 nn.ReLU()
             )
@@ -26,10 +21,6 @@ class UpBlock(nn.Module):
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=True),
-                # nn.ReLU(),
-                # nn.Conv2d(output_channels, output_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=True),
                 nn.ReLU()
             )
 
@@ -42,11 +33,6 @@ class UpBlockBig(nn.Module):
         
         if include_batch_norm:
             self.up = nn.Sequential(
-                # nn.Conv2d(input_channels, input_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=False),
-                # nn.BatchNorm2d(input_channels),
-                # nn.ReLU(),
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=False),
@@ -60,10 +46,6 @@ class UpBlockBig(nn.Module):
             )
         else: 
             self.up = nn.Sequential(
-                # nn.Conv2d(input_channels, input_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=False),
-                # nn.ReLU(),
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=False),
@@ -77,9 +59,9 @@ class UpBlockBig(nn.Module):
     def forward(self, x):
         return self.up(x)
 
-class VSegm(nn.Module):
+class VggUNet(nn.Module):
     def __init__(self, output_channels=1):
-        super(VSegm, self).__init__()
+        super(VggUNet, self).__init__()
         
         self.down = vgg.vgg16_bn(pretrained=True).features
 
@@ -114,7 +96,6 @@ class VSegm(nn.Module):
         for ii, sub_model in  enumerate(self.down):
             d = sub_model(d)
             if ii in {5, 12, 22, 32, 42}:
-                # ic(d.shape)
                 necessary_outputs.append(d)
                 necessary_shapes.append(d.shape[-2:])
 
@@ -135,10 +116,6 @@ class VSegm(nn.Module):
         up1 = F.interpolate(up2, size=(necessary_shapes[1]))
         up1 = torch.cat([up1, necessary_outputs[1]], dim=1)
         up1 = self.up1(up1)
-
-        # up0 = F.interpolate(up1, size=(224, 224))
-        # ic('up0 output shape ', up0.shape)
-        # up0 = self.up0(up0)
 
         last = F.interpolate(up1, size=(necessary_shapes[0]))
         last = self.up0(last)

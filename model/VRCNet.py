@@ -14,11 +14,6 @@ class UpBlock(nn.Module):
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=False),
-                # nn.BatchNorm2d(output_channels),
-                # nn.ReLU(),
-                # nn.Conv2d(output_channels, output_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=False),
                 nn.BatchNorm2d(output_channels),
                 nn.ReLU()
             )
@@ -27,56 +22,11 @@ class UpBlock(nn.Module):
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=True),
-                # nn.ReLU(),
-                # nn.Conv2d(output_channels, output_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=True),
                 nn.ReLU()
             )
 
     def forward(self, x):
         return self.up(x)
-
-# class UpBlockBig(nn.Module):
-#     def __init__(self, input_channels, output_channels, include_batch_norm=True):
-#         super(UpBlockBig, self).__init__()
-#         
-#         if include_batch_norm:
-#             self.up = nn.Sequential(
-#                 # nn.Conv2d(input_channels, input_channels, 
-#                 #     kernel_size=5, stride=1,
-#                 #     padding=2, bias=False),
-#                 # nn.BatchNorm2d(input_channels),
-#                 # nn.ReLU(),
-#                 nn.Conv2d(input_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.BatchNorm2d(output_channels),
-#                 nn.ReLU(),
-#                 nn.Conv2d(output_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.BatchNorm2d(output_channels),
-#                 nn.ReLU()
-#             )
-#         else: 
-#             self.up = nn.Sequential(
-#                 # nn.Conv2d(input_channels, input_channels, 
-#                 #     kernel_size=5, stride=1,
-#                 #     padding=2, bias=False),
-#                 # nn.ReLU(),
-#                 nn.Conv2d(input_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.ReLU(),
-#                 nn.Conv2d(output_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.ReLU()
-#             )
-# 
-#     def forward(self, x):
-#         return self.up(x)
 
 class VRCNet(nn.Module):
     def __init__(self, output_channels=1):

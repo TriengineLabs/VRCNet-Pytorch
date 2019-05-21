@@ -14,11 +14,6 @@ class UpBlock(nn.Module):
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=False),
-                # nn.BatchNorm2d(output_channels),
-                # nn.ReLU(),
-                # nn.Conv2d(output_channels, output_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=False),
                 nn.BatchNorm2d(output_channels),
                 nn.ReLU()
             )
@@ -27,56 +22,11 @@ class UpBlock(nn.Module):
                 nn.Conv2d(input_channels, output_channels, 
                     kernel_size=5, stride=1,
                     padding=2, bias=True),
-                # nn.ReLU(),
-                # nn.Conv2d(output_channels, output_channels, 
-                #     kernel_size=5, stride=1,
-                #     padding=2, bias=True),
                 nn.ReLU()
             )
 
     def forward(self, x):
         return self.up(x)
-
-# class UpBlockBig(nn.Module):
-#     def __init__(self, input_channels, output_channels, include_batch_norm=True):
-#         super(UpBlockBig, self).__init__()
-#         
-#         if include_batch_norm:
-#             self.up = nn.Sequential(
-#                 # nn.Conv2d(input_channels, input_channels, 
-#                 #     kernel_size=5, stride=1,
-#                 #     padding=2, bias=False),
-#                 # nn.BatchNorm2d(input_channels),
-#                 # nn.ReLU(),
-#                 nn.Conv2d(input_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.BatchNorm2d(output_channels),
-#                 nn.ReLU(),
-#                 nn.Conv2d(output_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.BatchNorm2d(output_channels),
-#                 nn.ReLU()
-#             )
-#         else: 
-#             self.up = nn.Sequential(
-#                 # nn.Conv2d(input_channels, input_channels, 
-#                 #     kernel_size=5, stride=1,
-#                 #     padding=2, bias=False),
-#                 # nn.ReLU(),
-#                 nn.Conv2d(input_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.ReLU(),
-#                 nn.Conv2d(output_channels, output_channels, 
-#                     kernel_size=5, stride=1,
-#                     padding=2, bias=False),
-#                 nn.ReLU()
-#             )
-# 
-#     def forward(self, x):
-#         return self.up(x)
 
 class VCNet(nn.Module):
     def __init__(self, output_channels=1):
@@ -104,9 +54,6 @@ class VCNet(nn.Module):
         #Defining VGG
         self.vgg = vgg.vgg16_bn(pretrained=True).features
 
-        # self.worm3 = nn.Sequential(
-        #         nn.Conv2d(256, 128, kernel_size=5, stride=1, padding=2),
-        #         nn.ReLU())
         self.worm2 = nn.Sequential(
                 nn.Conv2d(256, 64, kernel_size=5, stride=1, padding=2),
                 nn.ReLU())
@@ -159,28 +106,18 @@ class VCNet(nn.Module):
         mid = nn.ReLU().forward(mid)
 
         up = F.interpolate(mid, size=(necessary_shapes[4]))
-        # up = torch.cat([up, necessary_outputs[3], resnetl_3[:,:,:64, :10]], dim=1)
         up = self.up4(up)
 
         up = F.interpolate(up, size=(necessary_shapes[3]))
-        # ic(necessary_outputs[2].shape)
-        # ic(resnetl_2.shape)
-        # ic(up.shape)
         up = torch.cat([up, necessary_outputs[2], resnetl_2[:,:,:128, :21]], dim=1)
         up = self.up3(up)
 
         up = F.interpolate(up, size=(necessary_shapes[2]))
-        # ic(necessary_outputs[1].shape)
-        # ic(resnetl_1.shape)
-        # ic(up.shape)
         vgg_inp = self.worm2(necessary_outputs[1])
         up = torch.cat([up, vgg_inp, resnetl_1[:,:,:256, :43]], dim=1)
         up = self.up2(up)
 
         up = F.interpolate(up, size=(necessary_shapes[1]))
-        # ic(necessary_outputs[0].shape)
-        # ic(resnetl_0.shape)
-        # ic(up.shape)
         vgg_inp = self.worm1(necessary_outputs[0])
         up = torch.cat([up, vgg_inp, resnetl_0[:,:,:512,:86]], dim=1)
         up = self.up1(up)

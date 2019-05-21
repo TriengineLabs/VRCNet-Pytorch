@@ -7,7 +7,7 @@ import train
 from torch.optim.lr_scheduler import StepLR
 from model.VRCNet import VRCNet
 from model.SCUNet import Generator
-from model.VSegm import VSegm
+from model.VggUNet import VggUNet
 from model.ResUNet import Generator as ResUNet
 from model.VCNet import VCNet
 from calculate_score import calculate_score
@@ -92,8 +92,8 @@ def main():
         # Defining model
         if 'SCUNet' == args['model_name']:
             model = Generator(1)
-        elif 'VSegm' == args['model_name']:
-            model = VSegm()
+        elif 'VggUNet' == args['model_name']:
+            model = VggUNet()
         elif 'ResUNet' == args['model_name']:
             model = ResUNet()
         elif 'VRCNet' == args['model_name']:
@@ -131,8 +131,8 @@ def main():
     elif args['mode'] == 'test':
         if 'SCUNet' == args['model_name']:
             model = Generator(1)
-        elif 'VSegm' == args['model_name']:
-            model = VSegm()
+        elif 'VggUNet' == args['model_name']:
+            model = VggUNet()
         elif 'ResUNet' == args['model_name']:
             model = ResUNet()
         else:

@@ -59,15 +59,11 @@ class Generator(nn.Module):
 
         self.final0 = nn.Sequential(
             nn.Conv2d(96, output_channels, 1),
-            # nn.Conv2d(96, 3, kernel_size=3, stride=1, padding=1),
             nn.Sigmoid()
         )
 
     def forward(self, inputs):
-        # l0 = self.layer0(torch.cat([inputs.unsqueeze(1), inputs.unsqueeze(1), inputs.unsqueeze(1)], dim=1))
         l_prep = self.layer_prep(inputs)
-        #print(torch.cat([inputs.unsqueeze(1), inputs.unsqueeze(1), inputs.unsqueeze(1)], dim=1).shape)
-        #print(l_prep.shape)
         l0 = self.layer0(l_prep)
         l0_maxpool = self.maxpool1(l0)
         l1 = self.layer1(l0_maxpool)
