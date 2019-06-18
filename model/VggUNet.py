@@ -60,11 +60,16 @@ class UpBlockBig(nn.Module):
         return self.up(x)
 
 class VggUNet(nn.Module):
-    def __init__(self, output_channels=1):
+    def __init__(self, output_channels=1, freeze_layers=False):
         super(VggUNet, self).__init__()
         
         self.down = vgg.vgg16_bn(pretrained=True).features
 
+        # Freezing layers
+        if freeze_layers:
+            for submod in self.down[:32]:
+                for parameter in submod.parameters():
+                    parameter.require_grad = False
 
         self.first_conv = nn.Conv2d(1, 3, kernel_size=5,
                 stride=1, padding=2)
@@ -88,8 +93,6 @@ class VggUNet(nn.Module):
     def forward(self, x):
         d = self.first_conv(x)
         d = nn.ReLU().forward(d)
-
-        
 
         necessary_shapes = []
         necessary_outputs = []

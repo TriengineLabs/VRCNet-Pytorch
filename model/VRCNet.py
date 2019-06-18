@@ -29,7 +29,7 @@ class UpBlock(nn.Module):
         return self.up(x)
 
 class VRCNet(nn.Module):
-    def __init__(self, output_channels=1):
+    def __init__(self, output_channels=1, freeze_layers=False):
         super(VRCNet, self).__init__()
 
         self.first_conv = nn.Conv2d(1, 3, kernel_size=5,
@@ -49,11 +49,23 @@ class VRCNet(nn.Module):
         self.resnet_layer2 = resnet.layer2
         self.resnet_layer3 = resnet.layer3
         self.resnet_layer4 = resnet.layer4
+
+        # Freeze layers
+        if freeze_layers:
+            self.resnet_layer1.require_grad = False
+            self.resnet_layer2.require_grad = False
+            self.resnet_layer3.require_grad = False
         del resnet
 
         #Defining VGG
         self.vgg = vgg.vgg16_bn(pretrained=True).features
 
+        # Freezing layers
+        if freeze_layers:
+            for submod in self.vgg[:32]:
+                for parameter in submod.parameters():
+                    parameter.require_grad = False
+        
         self.mid_conv = nn.Conv2d(1024, 1024, kernel_size=5,
                 stride=1, padding=2)
 
@@ -94,25 +106,25 @@ class VRCNet(nn.Module):
         resnetl_3 = self.resnet_layer3(resnetl_2)
         resnetl = self.resnet_layer4(resnetl_3)
 
-        mid = torch.cat([resnetl[:,:,:32, :5], d], dim=1)
+        mid = torch.cat([resnetl[:,:,:d.shape[2], :d.shape[3]], d], dim=1)
 
         mid = self.mid_conv(mid)
         mid = nn.ReLU().forward(mid)
 
         up = F.interpolate(mid, size=(necessary_shapes[4]))
-        up = torch.cat([up, necessary_outputs[3], resnetl_3[:,:,:64, :10]], dim=1)
+        up = torch.cat([up, necessary_outputs[3], resnetl_3[:,:,:up.shape[2], :up.shape[3]]], dim=1)
         up = self.up4(up)
 
         up = F.interpolate(up, size=(necessary_shapes[3]))
-        up = torch.cat([up, necessary_outputs[2], resnetl_2[:,:,:128, :21]], dim=1)
+        up = torch.cat([up, necessary_outputs[2], resnetl_2[:,:,:up.shape[2], :up.shape[3]]], dim=1)
         up = self.up3(up)
 
         up = F.interpolate(up, size=(necessary_shapes[2]))
-        up = torch.cat([up, necessary_outputs[1], resnetl_1[:,:,:256, :43]], dim=1)
+        up = torch.cat([up, necessary_outputs[1], resnetl_1[:,:,:up.shape[2], :up.shape[3]]], dim=1)
         up = self.up2(up)
 
         up = F.interpolate(up, size=(necessary_shapes[1]))
-        up = torch.cat([up, necessary_outputs[0], resnetl_0[:,:,:512,:86]], dim=1)
+        up = torch.cat([up, necessary_outputs[0], resnetl_0[:,:,:up.shape[2], :up.shape[3]]], dim=1)
         up = self.up1(up)
 
         up = F.interpolate(up, size=(necessary_shapes[0]))

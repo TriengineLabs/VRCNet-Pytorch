@@ -5,7 +5,7 @@ from icecream import ic
 from torchvision.models.resnet import resnet18
 
 class Generator(nn.Module):
-    def __init__(self, output_channels=1):
+    def __init__(self, output_channels=1, freeze_layers=False):
         super(Generator, self).__init__()
 
         resnet = resnet18(pretrained=True)
@@ -27,6 +27,13 @@ class Generator(nn.Module):
         self.layer3 = resnet.layer3
         self.layer4 = resnet.layer4
 
+        # Freeze layers if needed
+        if freeze_layers:
+            self.layer1.require_grad = False
+            self.layer2.require_grad = False
+            self.layer3.require_grad = False
+        
+        
         self.upsample4 = nn.Sequential(
             nn.Conv2d(512, 256, 3, 1, 1, bias=False),
             nn.BatchNorm2d(256),
