@@ -2,15 +2,19 @@
 
 Implementation of the paper "Singing Voice Separation using U-Net based architectures".
 
+
 ## Dataset
 
 This repository uses **musdb** dataset for training and evaluation. The dataset is free, but requires access. For downloading and for further usage of the dataset check [this](https://zenodo.org/record/1117372#.XQlP9bpfg3E) webpage.
 
 ## Models
 
-Models presented here are based on [UNet](https://arxiv.org/abs/1505.04597) architecture. The main difference is the encoding layer. For VggUNet, the encoding layer is the encoding part of VGG16, ResUNet uses encoding part of ResNet18 andn VRCNet uses both encoding layers of VGG16 and ResNet18 simultaneously. The diagram below summarizes all three models: VggUNet, ResUNet and VRCNet (from left to right).
+Models presented here are based on [UNet](https://arxiv.org/abs/1505.04597) architecture. The main difference is the encoding layer. For VggUNet, the encoding layer is the encoding part of [VGG16](https://arxiv.org/abs/1409.1556), ResUNet uses encoding part of [ResNet18](https://arxiv.org/abs/1512.03385) andn VRCNet uses both encoding layers of VGG16 and ResNet18 simultaneously. The diagram below summarizes all three models described in the paper: VggUNet, ResUNet and VRCNet (from left to right).
 
-![](./VggUNet_diag.png "VggUNet") ![](./ResUNet_diag.png "ResUNet") ![](./VRCNet_diag.png "VRCNet")
+
+<img width="250" src="./VggUNet_diag.png"> <img width="250" src="./ResUNet_diag.png"> <img width="300" src="./VRCNet_diag.png">
+
+In model folder, there is also our implementation of [Spectrogram-channels u-net](https://arxiv.org/abs/1810.11520) paper (SCUNet), as well as modified version of VRCNet: VCNet.
 
 ## Preparation
 
