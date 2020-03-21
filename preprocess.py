@@ -1,8 +1,9 @@
 import os
+import torchaudio
+import torch
 from tqdm import tqdm
 import musdb
 import h5py
-import librosa
 import pandas as pd
 from transforms import HorizontalCrop
 import parmap
@@ -18,7 +19,7 @@ def prepare_dataset(data_path, subset=None,
                     slice_duration=2,
                     n_workers=1):
     print('hop_length = ', hop_length)
-    mus = musdb.DB(root_dir=data_path)
+    mus = musdb.DB(root=data_path)
     music_list = mus.load_mus_tracks(subsets=subset)
     print('Starting preparing dataset...')
     if not os.path.exists(path_to_save):
@@ -43,24 +44,23 @@ def process_audio(audio, processed_csv,
                   slice_duration=2):
     rows = []
 
-    # paths_of_mix = dataset_csv.iloc[item, :].values
-    # audio = music_list[item]
     for i, p in enumerate(processed_csv.columns):
         if p == 'mix':
-            inp = librosa.to_mono(audio.audio.transpose())
+            inp = torch.mean(torch.tensor(audio.audio.transpose()), dim=0)
+
         else:
-            inp = librosa.to_mono(audio.targets[p].audio.transpose())
-
+            try:
+                inp = torch.mean(torch.tensor(audio.targets[p].audio.transpose()), dim=0)
+            except ValueError:
+                print(f"Error: could not process target {p} from audio {audio.name}. Skipping...")
         sr = audio.rate
-
-        # print(ft_inp.shape)
         if len(inp) < slice_duration:
             return
         for tr in range(len(inp) // (slice_duration * sr)):
             inp_slice = inp[tr * sr * slice_duration:(tr + 1) * slice_duration * sr]
             if resample_rate:
-                inp_slice = librosa.resample(inp, sr, resample_rate)
-            ft_inp = librosa.stft(inp_slice, n_fft=n_fft, hop_length=hop_length, window='hann', center=True)
+                inp_slice = torchaudio.transforms.Resample(sr, resample_rate).forward(inp)
+            ft_inp = torch.stft(inp_slice, n_fft=n_fft, hop_length=hop_length, window=torch.hann_window(n_fft), center=True)
             # print(ft_inp_slice.shape)
             filename = audio.name + '.' + p + '_' + str(tr)
 
@@ -73,5 +73,3 @@ def process_audio(audio, processed_csv,
                 rows.append([np_file_path])
 
     return rows
-    # for n in rows:
-    # processed_csv.loc[len(processed_csv)] = n
