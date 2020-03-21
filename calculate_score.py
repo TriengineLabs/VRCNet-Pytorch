@@ -1,7 +1,7 @@
 import parmap
 
 import torch
-import librosa
+import torchaudio
 import numpy as np
 import musdb
 import mir_eval
@@ -33,8 +33,8 @@ def calculate_SDR(music, model, n_fft=2048,
     scores = []
     sr = music.rate
     ind = 0
-    mixture = librosa.to_mono(music.audio.transpose())
-    vocal = librosa.to_mono(music.targets['vocals'].audio.transpose())
+    mixture = torch.mean(music.audio.transpose(), dim=0)
+    vocal = torch.mean(music.targets['vocals'].audio.transpose(), dim=0)
     for i in range(0, len(music.audio), slice_duration * sr):
         ind += 1
         mixture = mixture[i:i + slice_duration * sr]
@@ -47,8 +47,9 @@ def calculate_SDR(music, model, n_fft=2048,
         if i + 2 * sr >= len(music.audio):
             break
         resampled_mixture = mixture
-        mixture_stft = librosa.stft(resampled_mixture, n_fft=n_fft, hop_length=512, window='hann', center=True)
-        magnitude_mixture_stft, mixture_phase = librosa.magphase(mixture_stft)
+        mixture_stft = torch.stft(resampled_mixture, n_fft=n_fft, hop_length=hop_length,
+                                           window=torch.hann_window(n_fft), center=True)
+        magnitude_mixture_stft, mixture_phase = torchaudio.functional.magphase(mixture_stft)
         normalized_magnitude_mixture_stft = torch.Tensor(Normalize().forward([magnitude_mixture_stft])[0])
 
         sr_v = music.rate
@@ -56,8 +57,8 @@ def calculate_SDR(music, model, n_fft=2048,
             mask = model.forward(normalized_magnitude_mixture_stft.unsqueeze(0)).squeeze(0)
             out = mask * torch.Tensor(normalized_magnitude_mixture_stft)
         predicted_vocal_stft = out.numpy() * mixture_phase
-        predicted_vocal_audio = librosa.istft(predicted_vocal_stft.squeeze(0), win_length=n_fft,
-                                              hop_length=hop_length, window='hann', center='True')
+        predicted_vocal_audio = torch.stft(predicted_vocal_stft.squeeze(0), n_fft=n_fft, hop_length=hop_length,
+                                           window=torch.hann_window(n_fft), center=True)
         try:
             scores.append(
                 mir_eval.separation.bss_eval_sources(vocal[:predicted_vocal_audio.shape[0]],

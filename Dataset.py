@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-import librosa
+import torchaudio
 import h5py
 
 
@@ -20,9 +20,9 @@ class WaveDataset(Dataset):
             # Read saved numpy arrays that correspond to the initial music
             with h5py.File(p, 'r') as hf:
                 data = hf['dataset'][:]
-            mlc, phase = librosa.magphase(data)
+            mlc, phase = torchaudio.functional.magphase(data)
             if self.use_log_scale:
-                mlc = librosa.amplitude_to_db(mlc)
+                mlc = torchaudio.functional.amplitude_to_DB(mlc)
             #TODO find better way to handle even shape
             if mlc.shape[1]%2 == 0:
                 mlc = mlc[:, :-1]
