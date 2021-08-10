@@ -1,6 +1,6 @@
 # VRCNet-Pytorch
 
-Implementation of the paper "Singing Voice Separation using U-Net based architectures" by G. Bezirganyan, K. Muradyan.
+Implementation of the paper ["Singing Voice Separation using U-Net based architectures"](https://drive.google.com/file/d/1uPCasFfmgUEtY05ZO_vb3MiemXyZgkf9/view?usp=sharing) by G. Bezirganyan, K. Muradyan.
 
 
 ## Dataset
